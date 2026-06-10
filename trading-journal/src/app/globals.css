@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary:   #0d0f14;
+  --bg-secondary: #13151c;
+  --bg-card:      #1a1d27;
+  --bg-hover:     #1f2230;
+  --border:       #2a2d3a;
+  --text-primary: #e8eaf0;
+  --text-muted:   #6b7280;
+  --green:        #26de81;
+  --red:          #fc5c65;
+  --blue:         #4f8ef7;
+  --yellow:       #f7c948;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #3a3d4a; }
+
+/* Recharts tooltip */
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  color: var(--text-primary) !important;
+}
+
+@layer utilities {
+  .text-green  { color: var(--green); }
+  .text-red    { color: var(--red); }
+  .text-blue   { color: var(--blue); }
+  .text-muted  { color: var(--text-muted); }
+  .bg-card     { background-color: var(--bg-card); }
+  .bg-secondary { background-color: var(--bg-secondary); }
+  .border-default { border-color: var(--border); }
+}
