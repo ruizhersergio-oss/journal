@@ -30,8 +30,9 @@ export function calcPnl(
   entry: number,
   exit: number,
   symbol: Symbol,
+  contracts = 1,
 ): number {
   const multiplier = POINT_VALUE[symbol]
   const points = direction === 'long' ? exit - entry : entry - exit
-  return parseFloat((points * multiplier).toFixed(2))
+  return parseFloat((points * multiplier * contracts).toFixed(2))
 }

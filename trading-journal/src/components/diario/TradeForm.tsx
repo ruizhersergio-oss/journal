@@ -37,6 +37,7 @@ interface FormState {
   entry_price:  string
   exit_price:   string
   sl_price:     string
+  contracts:    number
   result:       TradeResult
   pnl:          string
   rr:           string
@@ -56,6 +57,7 @@ const defaultForm = (): FormState => ({
   entry_price: '',
   exit_price:  '',
   sl_price:    '',
+  contracts:   1,
   result:      'win',
   pnl:         '',
   rr:          '',
@@ -96,6 +98,7 @@ export default function TradeForm({ editTrade, onSaved, onCancel }: TradeFormPro
         entry_price: String(editTrade.entry_price),
         exit_price:  String(editTrade.exit_price),
         sl_price:    String(editTrade.sl_price),
+        contracts:   editTrade.contracts ?? 1,
         result:      editTrade.result,
         pnl:         String(editTrade.pnl),
         rr:          String(editTrade.rr),
@@ -118,10 +121,10 @@ export default function TradeForm({ editTrade, onSaved, onCancel }: TradeFormPro
 
     if (!isNaN(entry) && !isNaN(exit) && !isNaN(sl) && sl !== entry) {
       const rr  = calcRR(form.direction, entry, exit, sl)
-      const pnl = calcPnl(form.direction, entry, exit, form.symbol)
+      const pnl = calcPnl(form.direction, entry, exit, form.symbol, form.contracts)
       setForm(f => ({ ...f, rr: String(rr), pnl: String(pnl) }))
     }
-  }, [form.entry_price, form.exit_price, form.sl_price, form.direction, form.symbol])
+  }, [form.entry_price, form.exit_price, form.sl_price, form.direction, form.symbol, form.contracts])
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm(f => ({ ...f, [key]: value }))
@@ -193,6 +196,7 @@ export default function TradeForm({ editTrade, onSaved, onCancel }: TradeFormPro
       entry_price: parseFloat(form.entry_price),
       exit_price:  parseFloat(form.exit_price),
       sl_price:    parseFloat(form.sl_price),
+      contracts:   form.contracts,
       result:      form.result,
       pnl:         parseFloat(form.pnl),
       rr:          parseFloat(form.rr) || 0,
@@ -292,8 +296,8 @@ export default function TradeForm({ editTrade, onSaved, onCancel }: TradeFormPro
         </FormField>
       </div>
 
-      {/* ── Row 2: Prices + auto-calc ── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* ── Row 2: Prices + contracts ── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <FormField label="Entry Price" required error={errors.entry_price}>
           <Input
             type="number"
@@ -326,6 +330,17 @@ export default function TradeForm({ editTrade, onSaved, onCancel }: TradeFormPro
             error={!!errors.sl_price}
           />
         </FormField>
+
+        <FormField label="Contratos">
+          <Input
+            type="number"
+            step="1"
+            min="1"
+            placeholder="1"
+            value={String(form.contracts)}
+            onChange={e => set('contracts', Math.max(1, parseInt(e.target.value) || 1))}
+          />
+        </FormField>
       </div>
 
       {/* ── Auto-calc display ── */}
@@ -344,7 +359,7 @@ export default function TradeForm({ editTrade, onSaved, onCancel }: TradeFormPro
               </span>
             </span>
             <span className="text-[#6b7280] text-xs self-center">
-              (1 contrato {form.symbol})
+              ({form.contracts} contrato{form.contracts !== 1 ? 's' : ''} {form.symbol})
             </span>
           </div>
         </div>

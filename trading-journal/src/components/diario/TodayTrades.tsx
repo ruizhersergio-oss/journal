@@ -90,6 +90,9 @@ export default function TodayTrades({ trades, onEdit, onDelete, date }: TodayTra
                     )}>
                       {trade.direction === 'long' ? '↑' : '↓'}
                     </span>
+                    {(trade.contracts ?? 1) > 1 && (
+                      <span className="text-xs text-[#f7c948] font-medium">x{trade.contracts}</span>
+                    )}
                   </div>
 
                   {/* Prices */}

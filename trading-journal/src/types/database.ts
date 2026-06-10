@@ -82,6 +82,7 @@ export interface Trade {
   entry_price: number
   exit_price: number
   sl_price: number
+  contracts: number
   result: TradeResult
   pnl: number
   rr: number
