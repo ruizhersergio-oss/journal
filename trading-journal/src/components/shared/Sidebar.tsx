@@ -8,15 +8,17 @@ import {
   BarChart2,
   DollarSign,
   Download,
+  History,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
-  { href: '/dashboard',  label: 'Dashboard',    icon: LayoutDashboard },
-  { href: '/diario',     label: 'Diario',        icon: BookOpen },
-  { href: '/dol-stats',  label: 'DOL Stats',     icon: BarChart2 },
-  { href: '/inversion',  label: 'Inversión',     icon: DollarSign },
-  { href: '/backups',    label: 'Backups',        icon: Download },
+  { href: '/dashboard',   label: 'Dashboard',   icon: LayoutDashboard },
+  { href: '/diario',      label: 'Diario',       icon: BookOpen },
+  { href: '/dol-stats',   label: 'DOL Stats',    icon: BarChart2 },
+  { href: '/backtesting', label: 'Backtesting',  icon: History },
+  { href: '/inversion',   label: 'Inversión',    icon: DollarSign },
+  { href: '/backups',     label: 'Backups',       icon: Download },
 ]
 
 export default function Sidebar() {
@@ -47,7 +49,9 @@ export default function Sidebar() {
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                 active
-                  ? 'bg-[#4f8ef7]/10 text-[#4f8ef7]'
+                  ? href === '/backtesting'
+                    ? 'bg-[#a855f7]/10 text-[#a855f7]'
+                    : 'bg-[#4f8ef7]/10 text-[#4f8ef7]'
                   : 'text-[#6b7280] hover:text-[#e8eaf0] hover:bg-[#1f2230]'
               )}
             >

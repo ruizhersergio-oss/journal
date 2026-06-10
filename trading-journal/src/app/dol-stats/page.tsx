@@ -71,6 +71,7 @@ export default function DolStatsPage() {
     let query = supabase
       .from('trades')
       .select('*')
+      .eq('trade_type', 'real')
       .not('dol_type', 'is', null)
 
     if (filter === 'today') {

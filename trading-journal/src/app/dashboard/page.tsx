@@ -27,7 +27,7 @@ export default function DashboardPage() {
 
   const fetchTrades = useCallback(async () => {
     setLoading(true)
-    let query = supabase.from('trades').select('*').order('date', { ascending: false })
+    let query = supabase.from('trades').select('*').eq('trade_type', 'real').order('date', { ascending: false })
 
     if (filter === 'today') {
       const today = format(new Date(), 'yyyy-MM-dd')

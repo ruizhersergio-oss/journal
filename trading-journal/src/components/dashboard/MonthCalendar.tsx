@@ -13,11 +13,12 @@ import type { DayData } from '@/hooks/useMetrics'
 interface MonthCalendarProps {
   dayMap: Map<string, DayData>
   showR?: boolean
+  unit?:  'currency' | 'R'
 }
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 
-export default function MonthCalendar({ dayMap, showR = false }: MonthCalendarProps) {
+export default function MonthCalendar({ dayMap, showR = false, unit = 'currency' }: MonthCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
 
   const monthStart = startOfMonth(currentDate)
@@ -61,7 +62,10 @@ export default function MonthCalendar({ dayMap, showR = false }: MonthCalendarPr
               netMonth === 0 && 'text-[#6b7280]'
             )}
           >
-            {netMonth >= 0 ? '+' : ''}{formatCurrency(netMonth)}
+            {unit === 'R'
+              ? `${netMonth >= 0 ? '+' : ''}${netMonth.toFixed(2)}R`
+              : `${netMonth >= 0 ? '+' : ''}${formatCurrency(netMonth)}`
+            }
           </span>
         </div>
 
@@ -136,9 +140,11 @@ export default function MonthCalendar({ dayMap, showR = false }: MonthCalendarPr
                       isPos ? 'text-[#26de81]' : 'text-[#fc5c65]'
                     )}
                   >
-                    {showR
-                      ? `${data.pnl >= 0 ? '+' : ''}${(data.pnl / 100).toFixed(1)}R`
-                      : `${data.pnl >= 0 ? '+' : ''}${formatCurrency(data.pnl)}`
+                    {unit === 'R'
+                      ? `${data.pnl >= 0 ? '+' : ''}${data.pnl.toFixed(2)}R`
+                      : showR
+                        ? `${data.pnl >= 0 ? '+' : ''}${(data.pnl / 100).toFixed(1)}R`
+                        : `${data.pnl >= 0 ? '+' : ''}${formatCurrency(data.pnl)}`
                     }
                   </span>
                   <span className="text-[10px] text-[#6b7280] mt-0.5">

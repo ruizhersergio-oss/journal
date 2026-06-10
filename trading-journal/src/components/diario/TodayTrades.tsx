@@ -66,6 +66,13 @@ export default function TodayTrades({ trades, onEdit, onDelete, date }: TodayTra
               <div key={trade.id} className="hover:bg-[#1f2230] transition-colors">
                 {/* Main row */}
                 <div className="flex items-center gap-3 px-5 py-3">
+                  {/* Backtest badge */}
+                  {(trade.trade_type ?? 'real') === 'backtest' && (
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#a855f7]/10 text-[#a855f7] border border-[#a855f7]/20 shrink-0">
+                      BT
+                    </span>
+                  )}
+
                   {/* Result badge */}
                   <span className={cn(
                     'w-12 text-center py-1 rounded text-xs font-bold uppercase shrink-0',

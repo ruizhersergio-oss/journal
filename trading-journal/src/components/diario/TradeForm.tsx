@@ -9,7 +9,7 @@ import { cn, formatCurrency } from '@/lib/utils'
 import { FormField, Input, Textarea, Select } from '@/components/ui/FormField'
 import type {
   Trade, Symbol, TradeDirection, TradeResult,
-  KillZone, DolType, IctConfluence,
+  KillZone, DolType, IctConfluence, TradeType,
 } from '@/types/database'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -54,6 +54,7 @@ interface FormState {
   exit_price:   string
   sl_price:     string
   contracts:    number
+  trade_type:   TradeType
   result:       TradeResult
   pnl:          string
   rr:           string
@@ -65,7 +66,7 @@ interface FormState {
   image_url:    string | null
 }
 
-const defaultForm = (): FormState => ({
+const defaultForm = (tradeType: TradeType = 'real'): FormState => ({
   date:        format(new Date(), 'yyyy-MM-dd'),
   time:        format(new Date(), 'HH:mm'),
   symbol:      'MNQ',
@@ -74,6 +75,7 @@ const defaultForm = (): FormState => ({
   exit_price:  '',
   sl_price:    '',
   contracts:   1,
+  trade_type:  tradeType,
   result:      'win',
   pnl:         '',
   rr:          '',
@@ -88,15 +90,16 @@ const defaultForm = (): FormState => ({
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface TradeFormProps {
-  editTrade?: Trade | null
-  onSaved:    () => void
-  onCancel?:  () => void
+  editTrade?:        Trade | null
+  onSaved:           () => void
+  onCancel?:         () => void
+  defaultTradeType?: TradeType
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function TradeForm({ editTrade, onSaved, onCancel }: TradeFormProps) {
-  const [form, setForm]         = useState<FormState>(defaultForm)
+export default function TradeForm({ editTrade, onSaved, onCancel, defaultTradeType = 'real' }: TradeFormProps) {
+  const [form, setForm]         = useState<FormState>(() => defaultForm(defaultTradeType))
   const [saving, setSaving]     = useState(false)
   const [uploading, setUploading] = useState(false)
   const [errors, setErrors]     = useState<Partial<Record<keyof FormState, string>>>({})
@@ -115,6 +118,7 @@ export default function TradeForm({ editTrade, onSaved, onCancel }: TradeFormPro
         exit_price:  String(editTrade.exit_price),
         sl_price:    String(editTrade.sl_price),
         contracts:   editTrade.contracts ?? 1,
+        trade_type:  editTrade.trade_type ?? 'real',
         result:      editTrade.result,
         pnl:         String(editTrade.pnl),
         rr:          String(editTrade.rr),
@@ -213,6 +217,7 @@ export default function TradeForm({ editTrade, onSaved, onCancel }: TradeFormPro
       exit_price:  parseFloat(form.exit_price),
       sl_price:    parseFloat(form.sl_price),
       contracts:   form.contracts,
+      trade_type:  form.trade_type,
       result:      form.result,
       pnl:         parseFloat(form.pnl),
       rr:          parseFloat(form.rr) || 0,
@@ -235,7 +240,7 @@ export default function TradeForm({ editTrade, onSaved, onCancel }: TradeFormPro
 
     setSaving(false)
     if (!error) {
-      setForm(defaultForm())
+      setForm(defaultForm(defaultTradeType))
       setImagePreview(null)
       onSaved()
     } else {
@@ -248,6 +253,35 @@ export default function TradeForm({ editTrade, onSaved, onCancel }: TradeFormPro
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+
+      {/* ── Trade type toggle ── */}
+      <div className="flex items-center gap-3 pb-2">
+        <span className="text-[#6b7280] text-xs font-medium">Tipo:</span>
+        <div className="flex gap-0.5 bg-[#13151c] border border-[#2a2d3a] rounded-lg p-0.5">
+          {(['real', 'backtest'] as TradeType[]).map(t => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => set('trade_type', t)}
+              className={cn(
+                'px-3 py-1.5 rounded-md text-xs font-semibold transition-colors',
+                form.trade_type === t
+                  ? t === 'real'
+                    ? 'bg-[#4f8ef7] text-white'
+                    : 'bg-[#a855f7] text-white'
+                  : 'text-[#6b7280] hover:text-[#e8eaf0]'
+              )}
+            >
+              {t === 'real' ? 'Real' : 'Backtest'}
+            </button>
+          ))}
+        </div>
+        {form.trade_type === 'backtest' && (
+          <span className="text-[10px] text-[#a855f7] bg-[#a855f7]/10 px-2 py-0.5 rounded">
+            Solo se registra para práctica, no afecta estadísticas reales
+          </span>
+        )}
+      </div>
 
       {/* ── Row 1: Date / Time / Symbol / Direction ── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

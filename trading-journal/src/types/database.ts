@@ -47,6 +47,8 @@ export type IctConfluence =
   | 'Volume Climax'
   | 'POC Migration'
 
+export type TradeType = 'real' | 'backtest'
+
 export type AccountStatus = 'activa' | 'funded' | 'breached' | 'completada'
 
 export const PROP_FIRMS = [
@@ -96,6 +98,7 @@ export interface Trade {
   exit_price: number
   sl_price: number
   contracts: number
+  trade_type: TradeType
   result: TradeResult
   pnl: number
   rr: number
