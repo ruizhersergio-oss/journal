@@ -1,16 +1,22 @@
 import { cn, formatCurrency } from '@/lib/utils'
 import type { DolType } from '@/types/database'
 
-const DOL_LABELS: Record<DolType, { short: string; description: string }> = {
-  'SSL':                 { short: 'SSL',  description: 'Sell Side Liquidity' },
-  'BSL':                 { short: 'BSL',  description: 'Buy Side Liquidity' },
-  'Equal Highs':         { short: 'EQH',  description: 'Equal Highs' },
-  'Equal Lows':          { short: 'EQL',  description: 'Equal Lows' },
-  'NY Opening Gap':      { short: 'NYOG', description: 'NY Opening Gap' },
-  'Relative Equal Highs':{ short: 'REH',  description: 'Relative Equal Highs' },
-  'Relative Equal Lows': { short: 'REL',  description: 'Relative Equal Lows' },
-  'Data Highs':          { short: 'DH',   description: 'Data Highs' },
-  'Data Lows':           { short: 'DL',   description: 'Data Lows' },
+const DOL_LABELS: Record<DolType, { short: string; description: string; group?: string }> = {
+  'SSL':                 { short: 'SSL',  description: 'Sell Side Liquidity',      group: 'ICT' },
+  'BSL':                 { short: 'BSL',  description: 'Buy Side Liquidity',       group: 'ICT' },
+  'Equal Highs':         { short: 'EQH',  description: 'Equal Highs',              group: 'ICT' },
+  'Equal Lows':          { short: 'EQL',  description: 'Equal Lows',               group: 'ICT' },
+  'NY Opening Gap':      { short: 'NYOG', description: 'NY Opening Gap',           group: 'ICT' },
+  'Relative Equal Highs':{ short: 'REH',  description: 'Relative Equal Highs',     group: 'ICT' },
+  'Relative Equal Lows': { short: 'REL',  description: 'Relative Equal Lows',      group: 'ICT' },
+  'Data Highs':          { short: 'DH',   description: 'Data Highs',               group: 'ICT' },
+  'Data Lows':           { short: 'DL',   description: 'Data Lows',                group: 'ICT' },
+  'POC Diario':          { short: 'POCd', description: 'POC Diario',               group: 'VP' },
+  'POC Semanal':         { short: 'POCw', description: 'POC Semanal',              group: 'VP' },
+  'VAH':                 { short: 'VAH',  description: 'Value Area High',          group: 'VP' },
+  'VAL':                 { short: 'VAL',  description: 'Value Area Low',           group: 'VP' },
+  'HVN':                 { short: 'HVN',  description: 'High Volume Node',         group: 'VP' },
+  'LVN':                 { short: 'LVN',  description: 'Low Volume Node',          group: 'VP' },
 }
 
 export interface DolStat {
@@ -72,6 +78,16 @@ export default function DolCard({ stat, rank }: DolCardProps) {
             )}>
               {label.short}
             </span>
+            {label.group && (
+              <span className={cn(
+                'text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider',
+                label.group === 'VP'
+                  ? 'bg-[#a855f7]/10 text-[#a855f7]'
+                  : 'bg-[#4b5563]/20 text-[#6b7280]'
+              )}>
+                {label.group}
+              </span>
+            )}
             {rank && !isEmpty && (
               <span className="text-[10px] text-[#4b5563]">#{rank}</span>
             )}

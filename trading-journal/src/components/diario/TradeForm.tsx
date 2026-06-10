@@ -14,17 +14,33 @@ import type {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const SYMBOLS: Symbol[]        = ['MNQ', 'NQ', 'ES', 'MES']
-const KILL_ZONES: KillZone[]   = ['London', 'NY Open', 'NY AM', 'NY PM']
-const DOL_TYPES: DolType[]     = [
-  'SSL', 'BSL', 'Equal Highs', 'Equal Lows',
-  'NY Opening Gap', 'Relative Equal Highs', 'Relative Equal Lows',
-  'Data Highs', 'Data Lows',
+const SYMBOLS: Symbol[]      = ['MNQ', 'NQ', 'ES', 'MES']
+const KILL_ZONES: KillZone[] = ['London', 'NY Open', 'NY AM', 'NY PM']
+
+const DOL_GROUPS: { label: string; options: DolType[] }[] = [
+  {
+    label: 'ICT / Liquidez',
+    options: [
+      'SSL', 'BSL', 'Equal Highs', 'Equal Lows',
+      'NY Opening Gap', 'Relative Equal Highs', 'Relative Equal Lows',
+      'Data Highs', 'Data Lows',
+    ],
+  },
+  {
+    label: 'Volume Profile',
+    options: ['POC Diario', 'POC Semanal', 'VAH', 'VAL', 'HVN', 'LVN'],
+  },
 ]
-const CONFLUENCES: IctConfluence[] = [
-  'FVG', 'OB', 'MSS', 'SSL sweep', 'BSL sweep',
-  'Judas Swing', 'AMD', 'CISD', 'Protected Swing',
-  'VWAP', 'Order Flow Delta', 'Absorción', 'otros',
+
+const CONFLUENCE_GROUPS: { label: string; items: IctConfluence[] }[] = [
+  {
+    label: 'ICT',
+    items: ['FVG', 'OB', 'MSS', 'SSL sweep', 'BSL sweep', 'Judas Swing', 'AMD', 'CISD', 'Protected Swing', 'VWAP', 'otros'],
+  },
+  {
+    label: 'Order Flow',
+    items: ['Absorción', 'Order Flow Delta', 'Imbalance (Bid/Ask)', 'Stacked Imbalances', 'Delta Divergence', 'Iceberg Order', 'Exhaustion', 'Volume Climax', 'POC Migration'],
+  },
 ]
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -441,30 +457,43 @@ export default function TradeForm({ editTrade, onSaved, onCancel }: TradeFormPro
             onChange={e => set('dol_type', e.target.value as DolType | '')}
           >
             <option value="">— Sin especificar —</option>
-            {DOL_TYPES.map(d => (
-              <option key={d} value={d}>{d}</option>
+            {DOL_GROUPS.map(group => (
+              <optgroup key={group.label} label={group.label}>
+                {group.options.map(d => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </optgroup>
             ))}
           </Select>
         </FormField>
       </div>
 
       {/* ── Confluences ── */}
-      <FormField label="Confluencias ICT">
-        <div className="flex flex-wrap gap-2">
-          {CONFLUENCES.map(c => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => toggleConfluence(c)}
-              className={cn(
-                'px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors',
-                form.confluences.includes(c)
-                  ? 'bg-[#4f8ef7]/10 border-[#4f8ef7] text-[#4f8ef7]'
-                  : 'border-[#2a2d3a] text-[#6b7280] hover:border-[#3a3d4a] hover:text-[#e8eaf0]'
-              )}
-            >
-              {c}
-            </button>
+      <FormField label="Confluencias">
+        <div className="space-y-3">
+          {CONFLUENCE_GROUPS.map(group => (
+            <div key={group.label}>
+              <p className="text-[#4b5563] text-[10px] font-semibold uppercase tracking-widest mb-2">
+                {group.label}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {group.items.map(c => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => toggleConfluence(c)}
+                    className={cn(
+                      'px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors',
+                      form.confluences.includes(c)
+                        ? 'bg-[#4f8ef7]/10 border-[#4f8ef7] text-[#4f8ef7]'
+                        : 'border-[#2a2d3a] text-[#6b7280] hover:border-[#3a3d4a] hover:text-[#e8eaf0]'
+                    )}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </FormField>

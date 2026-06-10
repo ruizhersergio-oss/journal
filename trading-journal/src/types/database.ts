@@ -10,6 +10,12 @@ export type DolType =
   | 'Relative Equal Lows'
   | 'Data Highs'
   | 'Data Lows'
+  | 'POC Diario'
+  | 'POC Semanal'
+  | 'VAH'
+  | 'VAL'
+  | 'HVN'
+  | 'LVN'
 
 export type KillZone = 'London' | 'NY Open' | 'NY AM' | 'NY PM'
 
@@ -30,9 +36,16 @@ export type IctConfluence =
   | 'CISD'
   | 'Protected Swing'
   | 'VWAP'
-  | 'Order Flow Delta'
-  | 'Absorción'
   | 'otros'
+  | 'Absorción'
+  | 'Order Flow Delta'
+  | 'Imbalance (Bid/Ask)'
+  | 'Stacked Imbalances'
+  | 'Delta Divergence'
+  | 'Iceberg Order'
+  | 'Exhaustion'
+  | 'Volume Climax'
+  | 'POC Migration'
 
 export type AccountStatus = 'activa' | 'funded' | 'breached' | 'completada'
 

@@ -22,9 +22,12 @@ const TIME_FILTERS: { key: TimeFilter; label: string }[] = [
 ]
 
 const ALL_DOL_TYPES: DolType[] = [
+  // ICT / Liquidez
   'SSL', 'BSL', 'Equal Highs', 'Equal Lows',
   'NY Opening Gap', 'Relative Equal Highs', 'Relative Equal Lows',
   'Data Highs', 'Data Lows',
+  // Volume Profile
+  'POC Diario', 'POC Semanal', 'VAH', 'VAL', 'HVN', 'LVN',
 ]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -162,7 +165,7 @@ export default function DolStatsPage() {
       {/* ── Cards grid ── */}
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array(9).fill(0).map((_, i) => (
+          {Array(15).fill(0).map((_, i) => (
             <div key={i} className="bg-[#1a1d27] border border-[#2a2d3a] rounded-xl h-44 animate-pulse" />
           ))}
         </div>
