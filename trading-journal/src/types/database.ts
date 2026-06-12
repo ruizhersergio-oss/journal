@@ -135,6 +135,7 @@ export interface Trade {
   comment: string | null
   notes: string | null
   image_url: string | null
+  image_url_2: string | null
 }
 
 export interface Database {

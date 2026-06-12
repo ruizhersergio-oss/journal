@@ -83,6 +83,7 @@ interface FormState {
   comment:      string
   notes:        string
   image_url:    string | null
+  image_url_2:  string | null
 }
 
 const defaultForm = (tradeType: TradeType = 'real'): FormState => ({
@@ -104,6 +105,7 @@ const defaultForm = (tradeType: TradeType = 'real'): FormState => ({
   comment:     '',
   notes:       '',
   image_url:   null,
+  image_url_2: null,
 })
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -120,10 +122,13 @@ interface TradeFormProps {
 export default function TradeForm({ editTrade, onSaved, onCancel, defaultTradeType = 'real' }: TradeFormProps) {
   const [form, setForm]         = useState<FormState>(() => defaultForm(defaultTradeType))
   const [saving, setSaving]     = useState(false)
-  const [uploading, setUploading] = useState(false)
+  const [uploading, setUploading]   = useState(false)
+  const [uploading2, setUploading2] = useState(false)
   const [errors, setErrors]     = useState<Partial<Record<keyof FormState, string>>>({})
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
-  const fileRef = useRef<HTMLInputElement>(null)
+  const [imagePreview, setImagePreview]   = useState<string | null>(null)
+  const [imagePreview2, setImagePreview2] = useState<string | null>(null)
+  const fileRef  = useRef<HTMLInputElement>(null)
+  const fileRef2 = useRef<HTMLInputElement>(null)
 
   // Populate form when editing
   useEffect(() => {
@@ -146,9 +151,11 @@ export default function TradeForm({ editTrade, onSaved, onCancel, defaultTradeTy
         confluences: (editTrade.confluences ?? []) as IctConfluence[],
         comment:     editTrade.comment   ?? '',
         notes:       editTrade.notes     ?? '',
-        image_url:   editTrade.image_url ?? null,
+        image_url:   editTrade.image_url   ?? null,
+        image_url_2: editTrade.image_url_2 ?? null,
       })
-      if (editTrade.image_url) setImagePreview(editTrade.image_url)
+      if (editTrade.image_url)   setImagePreview(editTrade.image_url)
+      if (editTrade.image_url_2) setImagePreview2(editTrade.image_url_2)
     }
   }, [editTrade])
 
@@ -179,10 +186,11 @@ export default function TradeForm({ editTrade, onSaved, onCancel, defaultTradeTy
     }))
   }
 
-  async function uploadFile(file: File) {
-    setUploading(true)
+  async function uploadFile(file: File, slot: 1 | 2 = 1) {
+    const setLoad = slot === 1 ? setUploading : setUploading2
+    setLoad(true)
     const ext  = file.name.split('.').pop() || 'png'
-    const path = `trades/${Date.now()}.${ext}`
+    const path = `trades/${Date.now()}_${slot}.${ext}`
 
     const { data, error } = await supabase.storage
       .from('trade-images')
@@ -190,34 +198,46 @@ export default function TradeForm({ editTrade, onSaved, onCancel, defaultTradeTy
 
     if (error) {
       console.error('Upload error:', error)
-      setUploading(false)
+      setLoad(false)
       return
     }
 
     const { data: urlData } = supabase.storage.from('trade-images').getPublicUrl(data.path)
-    setForm(f => ({ ...f, image_url: urlData.publicUrl }))
-    setImagePreview(urlData.publicUrl)
-    setUploading(false)
+    if (slot === 1) {
+      setForm(f => ({ ...f, image_url: urlData.publicUrl }))
+      setImagePreview(urlData.publicUrl)
+    } else {
+      setForm(f => ({ ...f, image_url_2: urlData.publicUrl }))
+      setImagePreview2(urlData.publicUrl)
+    }
+    setLoad(false)
   }
 
-  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>, slot: 1 | 2) {
     const file = e.target.files?.[0]
-    if (file) await uploadFile(file)
+    if (file) await uploadFile(file, slot)
   }
 
   async function handleFormPaste(e: React.ClipboardEvent) {
-    if (imagePreview) return
     const items = Array.from(e.clipboardData.items)
     const imageItem = items.find(item => item.type.startsWith('image/'))
     if (!imageItem) return
     const file = imageItem.getAsFile()
-    if (file) await uploadFile(file)
+    if (!file) return
+    // fill slot 1 first, then slot 2
+    await uploadFile(file, !imagePreview ? 1 : 2)
   }
 
-  function removeImage() {
-    setForm(f => ({ ...f, image_url: null }))
-    setImagePreview(null)
-    if (fileRef.current) fileRef.current.value = ''
+  function removeImage(slot: 1 | 2) {
+    if (slot === 1) {
+      setForm(f => ({ ...f, image_url: null }))
+      setImagePreview(null)
+      if (fileRef.current) fileRef.current.value = ''
+    } else {
+      setForm(f => ({ ...f, image_url_2: null }))
+      setImagePreview2(null)
+      if (fileRef2.current) fileRef2.current.value = ''
+    }
   }
 
   function validate(): boolean {
@@ -255,8 +275,9 @@ export default function TradeForm({ editTrade, onSaved, onCancel, defaultTradeTy
       dol_type:    (form.dol_type   || null) as DolType  | null,
       kill_zone:   (form.kill_zone  || null) as KillZone | null,
       comment:     form.comment  || null,
-      notes:       form.notes    || null,
-      image_url:   form.image_url || null,
+      notes:       form.notes      || null,
+      image_url:   form.image_url  || null,
+      image_url_2: form.image_url_2 || null,
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -272,6 +293,7 @@ export default function TradeForm({ editTrade, onSaved, onCancel, defaultTradeTy
     if (!error) {
       setForm(defaultForm(defaultTradeType))
       setImagePreview(null)
+      setImagePreview2(null)
       onSaved()
     } else {
       console.error(error)
@@ -583,49 +605,95 @@ export default function TradeForm({ editTrade, onSaved, onCancel, defaultTradeTy
         </FormField>
       </div>
 
-      {/* ── Image upload ── */}
-      <FormField label="Imagen del trade (gráfico)">
-        {imagePreview ? (
-          <div className="relative w-full">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={imagePreview}
-              alt="Trade chart"
-              className="w-full max-h-64 object-contain rounded-lg border border-[#2a2d3a]"
-            />
-            <button
-              type="button"
-              onClick={removeImage}
-              className="absolute top-2 right-2 bg-[#0d0f14]/80 border border-[#2a2d3a] rounded-full p-1 text-[#6b7280] hover:text-[#fc5c65] transition-colors"
+      {/* ── Image upload (2 slots) ── */}
+      <FormField label="Imágenes del trade (hasta 2)">
+        <div className="grid grid-cols-2 gap-3">
+          {/* Slot 1 */}
+          {imagePreview ? (
+            <div className="relative w-full">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={imagePreview}
+                alt="Trade chart 1"
+                className="w-full max-h-48 object-contain rounded-lg border border-[#2a2d3a]"
+              />
+              <button
+                type="button"
+                onClick={() => removeImage(1)}
+                className="absolute top-2 right-2 bg-[#0d0f14]/80 border border-[#2a2d3a] rounded-full p-1 text-[#6b7280] hover:text-[#fc5c65] transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          ) : (
+            <label
+              className={cn(
+                'flex flex-col items-center justify-center gap-2 w-full h-32',
+                'border-2 border-dashed border-[#2a2d3a] rounded-lg cursor-pointer',
+                'hover:border-[#4f8ef7]/50 hover:bg-[#4f8ef7]/5 transition-colors',
+                uploading && 'opacity-60 pointer-events-none'
+              )}
             >
-              <X size={14} />
-            </button>
-          </div>
-        ) : (
-          <label
-            className={cn(
-              'flex flex-col items-center justify-center gap-2 w-full h-32',
-              'border-2 border-dashed border-[#2a2d3a] rounded-lg cursor-pointer',
-              'hover:border-[#4f8ef7]/50 hover:bg-[#4f8ef7]/5 transition-colors',
-              uploading && 'opacity-60 pointer-events-none'
-            )}
-          >
-            {uploading
-              ? <Loader2 size={20} className="text-[#4f8ef7] animate-spin" />
-              : <Upload size={20} className="text-[#4b5563]" />
-            }
-            <span className="text-xs text-[#6b7280]">
-              {uploading ? 'Subiendo...' : 'Click, arrastra o pega (Ctrl+V)'}
-            </span>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleImageUpload}
-            />
-          </label>
-        )}
+              {uploading
+                ? <Loader2 size={20} className="text-[#4f8ef7] animate-spin" />
+                : <Upload size={20} className="text-[#4b5563]" />
+              }
+              <span className="text-xs text-[#6b7280] text-center">
+                {uploading ? 'Subiendo...' : 'Imagen 1\nClick, arrastra o pega'}
+              </span>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={e => handleImageUpload(e, 1)}
+              />
+            </label>
+          )}
+
+          {/* Slot 2 */}
+          {imagePreview2 ? (
+            <div className="relative w-full">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={imagePreview2}
+                alt="Trade chart 2"
+                className="w-full max-h-48 object-contain rounded-lg border border-[#2a2d3a]"
+              />
+              <button
+                type="button"
+                onClick={() => removeImage(2)}
+                className="absolute top-2 right-2 bg-[#0d0f14]/80 border border-[#2a2d3a] rounded-full p-1 text-[#6b7280] hover:text-[#fc5c65] transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          ) : (
+            <label
+              className={cn(
+                'flex flex-col items-center justify-center gap-2 w-full h-32',
+                'border-2 border-dashed border-[#2a2d3a] rounded-lg cursor-pointer',
+                'hover:border-[#4f8ef7]/50 hover:bg-[#4f8ef7]/5 transition-colors',
+                uploading2 && 'opacity-60 pointer-events-none'
+              )}
+            >
+              {uploading2
+                ? <Loader2 size={20} className="text-[#4f8ef7] animate-spin" />
+                : <Upload size={20} className="text-[#4b5563]" />
+              }
+              <span className="text-xs text-[#6b7280] text-center">
+                {uploading2 ? 'Subiendo...' : 'Imagen 2\nClick, arrastra o pega'}
+              </span>
+              <input
+                ref={fileRef2}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={e => handleImageUpload(e, 2)}
+              />
+            </label>
+          )}
+        </div>
       </FormField>
 
       {/* ── Actions ── */}

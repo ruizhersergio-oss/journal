@@ -41,7 +41,8 @@ CREATE TABLE trades (
 
   comment       TEXT,
   notes         TEXT,
-  image_url     TEXT
+  image_url     TEXT,
+  image_url_2   TEXT
 );
 
 -- Índices útiles para el dashboard

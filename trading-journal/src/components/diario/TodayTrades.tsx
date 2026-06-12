@@ -134,7 +134,7 @@ export default function TodayTrades({ trades, onEdit, onDelete, date }: TodayTra
                   )}
 
                   {/* Image indicator */}
-                  {trade.image_url && (
+                  {(trade.image_url || trade.image_url_2) && (
                     <ImageIcon size={12} className="text-[#4b5563] shrink-0" />
                   )}
 
@@ -209,15 +209,27 @@ export default function TodayTrades({ trades, onEdit, onDelete, date }: TodayTra
                       </div>
                     )}
 
-                    {trade.image_url && (
+                    {(trade.image_url || trade.image_url_2) && (
                       <div>
-                        <p className="text-[#6b7280] text-xs mb-2">Gráfico</p>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={trade.image_url}
-                          alt="Trade chart"
-                          className="max-h-80 rounded-lg border border-[#2a2d3a] object-contain"
-                        />
+                        <p className="text-[#6b7280] text-xs mb-2">Gráfico{trade.image_url && trade.image_url_2 ? 's' : ''}</p>
+                        <div className={cn('gap-3', trade.image_url && trade.image_url_2 ? 'grid grid-cols-2' : 'flex')}>
+                          {trade.image_url && (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img
+                              src={trade.image_url}
+                              alt="Trade chart 1"
+                              className="max-h-80 rounded-lg border border-[#2a2d3a] object-contain w-full"
+                            />
+                          )}
+                          {trade.image_url_2 && (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img
+                              src={trade.image_url_2}
+                              alt="Trade chart 2"
+                              className="max-h-80 rounded-lg border border-[#2a2d3a] object-contain w-full"
+                            />
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
