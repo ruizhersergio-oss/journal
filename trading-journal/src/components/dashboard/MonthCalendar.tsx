@@ -11,14 +11,15 @@ import { formatCurrency, formatPercent } from '@/lib/utils'
 import type { DayData } from '@/hooks/useMetrics'
 
 interface MonthCalendarProps {
-  dayMap: Map<string, DayData>
-  showR?: boolean
-  unit?:  'currency' | 'R'
+  dayMap:       Map<string, DayData>
+  showR?:       boolean
+  unit?:        'currency' | 'R'
+  onDayClick?:  (date: string) => void
 }
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 
-export default function MonthCalendar({ dayMap, showR = false, unit = 'currency' }: MonthCalendarProps) {
+export default function MonthCalendar({ dayMap, showR = false, unit = 'currency', onDayClick }: MonthCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
 
   const monthStart = startOfMonth(currentDate)
@@ -105,13 +106,15 @@ export default function MonthCalendar({ dayMap, showR = false, unit = 'currency'
           return (
             <div
               key={key}
+              onClick={() => hasTrades && onDayClick?.(key)}
               className={cn(
                 'border-b border-r border-[#2a2d3a] min-h-[80px] p-2 flex flex-col transition-colors',
                 !inMonth && 'opacity-30',
                 hasTrades && isPos && 'bg-[#26de81]/5 hover:bg-[#26de81]/10',
                 hasTrades && isNeg && 'bg-[#fc5c65]/5 hover:bg-[#fc5c65]/10',
                 !hasTrades && 'hover:bg-[#1f2230]',
-                isToday_ && 'ring-1 ring-inset ring-[#4f8ef7]/50'
+                isToday_ && 'ring-1 ring-inset ring-[#4f8ef7]/50',
+                hasTrades && onDayClick && 'cursor-pointer'
               )}
             >
               {/* Day number */}

@@ -26,12 +26,13 @@ interface BackupRecord {
 }
 
 interface DbStats {
-  tradeCount:   number
-  accountCount: number
-  payoutCount:  number
-  oldestTrade:  string | null
-  newestTrade:  string | null
-  totalPnl:     number
+  tradeCount:      number
+  accountCount:    number
+  payoutCount:     number
+  oldestTrade:     string | null
+  newestTrade:     string | null
+  totalRealPnl:    number
+  totalBacktestR:  number
 }
 
 interface ImportPreview {
@@ -74,22 +75,25 @@ export default function BackupsPage() {
   const fetchStats = useCallback(async () => {
     setStatsLoading(true)
     const [tradesRes, accountsRes, payoutsRes] = await Promise.all([
-      supabase.from('trades').select('date, pnl', { count: 'exact' }),
+      supabase.from('trades').select('date, pnl, rr, trade_type', { count: 'exact' }),
       supabase.from('funding_accounts').select('id', { count: 'exact' }),
       supabase.from('payouts').select('id', { count: 'exact' }),
     ])
 
-    const trades   = (tradesRes.data  ?? []) as { date: string; pnl: number }[]
-    const dates    = trades.map(t => t.date).sort()
-    const totalPnl = trades.reduce((s, t) => s + t.pnl, 0)
+    const trades = (tradesRes.data ?? []) as { date: string; pnl: number; rr: number | null; trade_type: string }[]
+    const dates  = trades.map(t => t.date).sort()
+
+    const totalRealPnl   = trades.filter(t => t.trade_type === 'real').reduce((s, t) => s + (t.pnl ?? 0), 0)
+    const totalBacktestR = trades.filter(t => t.trade_type === 'backtest').reduce((s, t) => s + (t.rr ?? 0), 0)
 
     setStats({
-      tradeCount:   tradesRes.count  ?? 0,
-      accountCount: accountsRes.count ?? 0,
-      payoutCount:  payoutsRes.count  ?? 0,
-      oldestTrade:  dates[0]          ?? null,
-      newestTrade:  dates[dates.length - 1] ?? null,
-      totalPnl,
+      tradeCount:     tradesRes.count  ?? 0,
+      accountCount:   accountsRes.count ?? 0,
+      payoutCount:    payoutsRes.count  ?? 0,
+      oldestTrade:    dates[0]          ?? null,
+      newestTrade:    dates[dates.length - 1] ?? null,
+      totalRealPnl,
+      totalBacktestR,
     })
     setStatsLoading(false)
   }, [])
@@ -468,20 +472,25 @@ function DbStatsCard({ stats, loading, onRefresh }: {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          {Array(5).fill(0).map((_, i) => (
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+          {Array(6).fill(0).map((_, i) => (
             <div key={i} className="h-16 bg-[#13151c] rounded-lg animate-pulse" />
           ))}
         </div>
       ) : stats ? (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
           <StatCell label="Trades" value={String(stats.tradeCount)} />
           <StatCell label="Cuentas" value={String(stats.accountCount)} />
           <StatCell label="Payouts" value={String(stats.payoutCount)} />
           <StatCell
-            label="P&L total"
-            value={`${stats.totalPnl >= 0 ? '+' : ''}${formatCurrency(stats.totalPnl)}`}
-            valueColor={stats.totalPnl > 0 ? 'text-[#26de81]' : stats.totalPnl < 0 ? 'text-[#fc5c65]' : 'text-[#6b7280]'}
+            label="P&L Real ($)"
+            value={`${stats.totalRealPnl >= 0 ? '+' : ''}${formatCurrency(stats.totalRealPnl)}`}
+            valueColor={stats.totalRealPnl > 0 ? 'text-[#26de81]' : stats.totalRealPnl < 0 ? 'text-[#fc5c65]' : 'text-[#6b7280]'}
+          />
+          <StatCell
+            label="R Total (Backtest)"
+            value={`${stats.totalBacktestR >= 0 ? '+' : ''}${stats.totalBacktestR.toFixed(2)}R`}
+            valueColor={stats.totalBacktestR > 0 ? 'text-[#26de81]' : stats.totalBacktestR < 0 ? 'text-[#fc5c65]' : 'text-[#6b7280]'}
           />
           <div className="bg-[#13151c] rounded-lg px-3 py-3">
             <p className="text-[#6b7280] text-[10px] uppercase tracking-wider">Rango fechas</p>

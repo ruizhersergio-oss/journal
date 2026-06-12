@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { subDays, format } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import { useMetrics } from '@/hooks/useMetrics'
@@ -20,6 +21,7 @@ const TIME_FILTERS: { key: TimeFilter; label: string }[] = [
 ]
 
 export default function DashboardPage() {
+  const router = useRouter()
   const [trades, setTrades]       = useState<Trade[]>([])
   const [loading, setLoading]     = useState(true)
   const [filter, setFilter]       = useState<TimeFilter>('1m')
@@ -155,7 +157,11 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Calendar */}
         <div className="xl:col-span-2">
-          <MonthCalendar dayMap={dayMap} showR={showR} />
+          <MonthCalendar
+            dayMap={dayMap}
+            showR={showR}
+            onDayClick={(date) => router.push(`/diario?date=${date}`)}
+          />
         </div>
 
         {/* Weekly summary panel */}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { format } from 'date-fns'
 import { Plus, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -10,11 +11,15 @@ import TodayTrades from '@/components/diario/TodayTrades'
 import type { Trade } from '@/types/database'
 
 export default function DiarioPage() {
+  const searchParams = useSearchParams()
   const [trades, setTrades]       = useState<Trade[]>([])
   const [loading, setLoading]     = useState(true)
   const [showForm, setShowForm]   = useState(false)
   const [editTrade, setEditTrade] = useState<Trade | null>(null)
-  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'))
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const param = searchParams.get('date')
+    return param ?? format(new Date(), 'yyyy-MM-dd')
+  })
 
   const fetchTrades = useCallback(async () => {
     setLoading(true)
