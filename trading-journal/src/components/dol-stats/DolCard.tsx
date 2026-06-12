@@ -2,21 +2,48 @@ import { cn, formatCurrency } from '@/lib/utils'
 import type { DolType } from '@/types/database'
 
 const DOL_LABELS: Record<DolType, { short: string; description: string; group?: string }> = {
+  // Asia Session
+  'Asia High':           { short: 'AH',   description: 'Asia High',                group: 'Asia' },
+  'Asia Low':            { short: 'AL',   description: 'Asia Low',                 group: 'Asia' },
+  // London Session
+  'London High':         { short: 'LH',   description: 'London High',              group: 'LON' },
+  'London Low':          { short: 'LL',   description: 'London Low',               group: 'LON' },
+  // NY Session
+  'NY High':             { short: 'NYH',  description: 'NY High',                  group: 'NY' },
+  'NY Low':              { short: 'NYL',  description: 'NY Low',                   group: 'NY' },
+  'NY Opening Gap':      { short: 'NYOG', description: 'NY Opening Gap',           group: 'NY' },
+  // Liquidez ICT
   'SSL':                 { short: 'SSL',  description: 'Sell Side Liquidity',      group: 'ICT' },
   'BSL':                 { short: 'BSL',  description: 'Buy Side Liquidity',       group: 'ICT' },
   'Equal Highs':         { short: 'EQH',  description: 'Equal Highs',              group: 'ICT' },
   'Equal Lows':          { short: 'EQL',  description: 'Equal Lows',               group: 'ICT' },
-  'NY Opening Gap':      { short: 'NYOG', description: 'NY Opening Gap',           group: 'ICT' },
   'Relative Equal Highs':{ short: 'REH',  description: 'Relative Equal Highs',     group: 'ICT' },
   'Relative Equal Lows': { short: 'REL',  description: 'Relative Equal Lows',      group: 'ICT' },
-  'Data Highs':          { short: 'DH',   description: 'Data Highs',               group: 'ICT' },
-  'Data Lows':           { short: 'DL',   description: 'Data Lows',                group: 'ICT' },
+  'Old High':            { short: 'OH',   description: 'Old High',                 group: 'ICT' },
+  'Old Low':             { short: 'OL',   description: 'Old Low',                  group: 'ICT' },
+  'Daily High':          { short: 'DaH',  description: 'Daily High',               group: 'ICT' },
+  'Daily Low':           { short: 'DaL',  description: 'Daily Low',                group: 'ICT' },
+  'Weekly High':         { short: 'WH',   description: 'Weekly High',              group: 'ICT' },
+  'Weekly Low':          { short: 'WL',   description: 'Weekly Low',               group: 'ICT' },
+  'Monthly High':        { short: 'MoH',  description: 'Monthly High',             group: 'ICT' },
+  'Monthly Low':         { short: 'MoL',  description: 'Monthly Low',              group: 'ICT' },
+  // Volume Profile
   'POC Diario':          { short: 'POCd', description: 'POC Diario',               group: 'VP' },
   'POC Semanal':         { short: 'POCw', description: 'POC Semanal',              group: 'VP' },
+  'POC Mensual':         { short: 'POCm', description: 'POC Mensual',              group: 'VP' },
+  'POC Ayer':            { short: 'POCy', description: 'POC Ayer',                 group: 'VP' },
   'VAH':                 { short: 'VAH',  description: 'Value Area High',          group: 'VP' },
   'VAL':                 { short: 'VAL',  description: 'Value Area Low',           group: 'VP' },
   'HVN':                 { short: 'HVN',  description: 'High Volume Node',         group: 'VP' },
   'LVN':                 { short: 'LVN',  description: 'Low Volume Node',          group: 'VP' },
+  // Estructura
+  'Previous Day High':   { short: 'PDH',  description: 'Previous Day High',        group: 'EST' },
+  'Previous Day Low':    { short: 'PDL',  description: 'Previous Day Low',         group: 'EST' },
+  'Previous Week High':  { short: 'PWH',  description: 'Previous Week High',       group: 'EST' },
+  'Previous Week Low':   { short: 'PWL',  description: 'Previous Week Low',        group: 'EST' },
+  // Legacy
+  'Data Highs':          { short: 'DH',   description: 'Data Highs',               group: 'ICT' },
+  'Data Lows':           { short: 'DL',   description: 'Data Lows',                group: 'ICT' },
 }
 
 export interface DolStat {
@@ -81,9 +108,12 @@ export default function DolCard({ stat, rank }: DolCardProps) {
             {label.group && (
               <span className={cn(
                 'text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider',
-                label.group === 'VP'
-                  ? 'bg-[#a855f7]/10 text-[#a855f7]'
-                  : 'bg-[#4b5563]/20 text-[#6b7280]'
+                label.group === 'VP'  ? 'bg-[#a855f7]/10 text-[#a855f7]' :
+                label.group === 'NY'  ? 'bg-[#4f8ef7]/10 text-[#4f8ef7]' :
+                label.group === 'LON' ? 'bg-[#26de81]/10 text-[#26de81]' :
+                label.group === 'Asia'? 'bg-[#f7c948]/10 text-[#f7c948]' :
+                label.group === 'EST' ? 'bg-[#fc5c65]/10 text-[#fc5c65]' :
+                'bg-[#4b5563]/20 text-[#6b7280]'
               )}>
                 {label.group}
               </span>

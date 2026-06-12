@@ -19,16 +19,35 @@ const KILL_ZONES: KillZone[] = ['London', 'NY Open', 'NY AM', 'NY PM']
 
 const DOL_GROUPS: { label: string; options: DolType[] }[] = [
   {
-    label: 'ICT / Liquidez',
+    label: 'Asia Session',
+    options: ['Asia High', 'Asia Low'],
+  },
+  {
+    label: 'London Session',
+    options: ['London High', 'London Low'],
+  },
+  {
+    label: 'NY Session',
+    options: ['NY High', 'NY Low', 'NY Opening Gap'],
+  },
+  {
+    label: 'Liquidez ICT',
     options: [
       'SSL', 'BSL', 'Equal Highs', 'Equal Lows',
-      'NY Opening Gap', 'Relative Equal Highs', 'Relative Equal Lows',
-      'Data Highs', 'Data Lows',
+      'Relative Equal Highs', 'Relative Equal Lows',
+      'Old High', 'Old Low',
+      'Daily High', 'Daily Low',
+      'Weekly High', 'Weekly Low',
+      'Monthly High', 'Monthly Low',
     ],
   },
   {
     label: 'Volume Profile',
-    options: ['POC Diario', 'POC Semanal', 'VAH', 'VAL', 'HVN', 'LVN'],
+    options: ['POC Diario', 'POC Semanal', 'POC Mensual', 'POC Ayer', 'VAH', 'VAL', 'HVN', 'LVN'],
+  },
+  {
+    label: 'Estructura',
+    options: ['Previous Day High', 'Previous Day Low', 'Previous Week High', 'Previous Week Low'],
   },
 ]
 
@@ -160,12 +179,9 @@ export default function TradeForm({ editTrade, onSaved, onCancel, defaultTradeTy
     }))
   }
 
-  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-
+  async function uploadFile(file: File) {
     setUploading(true)
-    const ext  = file.name.split('.').pop()
+    const ext  = file.name.split('.').pop() || 'png'
     const path = `trades/${Date.now()}.${ext}`
 
     const { data, error } = await supabase.storage
@@ -182,6 +198,20 @@ export default function TradeForm({ editTrade, onSaved, onCancel, defaultTradeTy
     setForm(f => ({ ...f, image_url: urlData.publicUrl }))
     setImagePreview(urlData.publicUrl)
     setUploading(false)
+  }
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (file) await uploadFile(file)
+  }
+
+  async function handleFormPaste(e: React.ClipboardEvent) {
+    if (imagePreview) return
+    const items = Array.from(e.clipboardData.items)
+    const imageItem = items.find(item => item.type.startsWith('image/'))
+    if (!imageItem) return
+    const file = imageItem.getAsFile()
+    if (file) await uploadFile(file)
   }
 
   function removeImage() {
@@ -252,7 +282,7 @@ export default function TradeForm({ editTrade, onSaved, onCancel, defaultTradeTy
   const pnlNum = parseFloat(form.pnl) || 0
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} onPaste={handleFormPaste} className="space-y-6">
 
       {/* ── Trade type toggle ── */}
       <div className="flex items-center gap-3 pb-2">
@@ -490,7 +520,6 @@ export default function TradeForm({ editTrade, onSaved, onCancel, defaultTradeTy
             value={form.dol_type}
             onChange={e => set('dol_type', e.target.value as DolType | '')}
           >
-            <option value="">— Sin especificar —</option>
             {DOL_GROUPS.map(group => (
               <optgroup key={group.label} label={group.label}>
                 {group.options.map(d => (
@@ -498,6 +527,7 @@ export default function TradeForm({ editTrade, onSaved, onCancel, defaultTradeTy
                 ))}
               </optgroup>
             ))}
+            <option value="">— Sin especificar —</option>
           </Select>
         </FormField>
       </div>
@@ -585,7 +615,7 @@ export default function TradeForm({ editTrade, onSaved, onCancel, defaultTradeTy
               : <Upload size={20} className="text-[#4b5563]" />
             }
             <span className="text-xs text-[#6b7280]">
-              {uploading ? 'Subiendo...' : 'Click o arrastra una imagen'}
+              {uploading ? 'Subiendo...' : 'Click, arrastra o pega (Ctrl+V)'}
             </span>
             <input
               ref={fileRef}

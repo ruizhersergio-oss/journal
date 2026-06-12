@@ -1,21 +1,48 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type DolType =
+  // Asia Session
+  | 'Asia High'
+  | 'Asia Low'
+  // London Session
+  | 'London High'
+  | 'London Low'
+  // NY Session
+  | 'NY High'
+  | 'NY Low'
+  | 'NY Opening Gap'
+  // Liquidez ICT
   | 'SSL'
   | 'BSL'
   | 'Equal Highs'
   | 'Equal Lows'
-  | 'NY Opening Gap'
   | 'Relative Equal Highs'
   | 'Relative Equal Lows'
-  | 'Data Highs'
-  | 'Data Lows'
+  | 'Old High'
+  | 'Old Low'
+  | 'Daily High'
+  | 'Daily Low'
+  | 'Weekly High'
+  | 'Weekly Low'
+  | 'Monthly High'
+  | 'Monthly Low'
+  // Volume Profile
   | 'POC Diario'
   | 'POC Semanal'
+  | 'POC Mensual'
+  | 'POC Ayer'
   | 'VAH'
   | 'VAL'
   | 'HVN'
   | 'LVN'
+  // Estructura
+  | 'Previous Day High'
+  | 'Previous Day Low'
+  | 'Previous Week High'
+  | 'Previous Week Low'
+  // Legacy
+  | 'Data Highs'
+  | 'Data Lows'
 
 export type KillZone = 'London' | 'NY Open' | 'NY AM' | 'NY PM'
 
