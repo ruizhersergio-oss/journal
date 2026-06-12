@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { format } from 'date-fns'
 import { Plus, X, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -11,6 +11,14 @@ import TodayTrades from '@/components/diario/TodayTrades'
 import type { Trade } from '@/types/database'
 
 export default function DiarioPage() {
+  return (
+    <Suspense>
+      <DiarioContent />
+    </Suspense>
+  )
+}
+
+function DiarioContent() {
   const searchParams = useSearchParams()
   const [trades, setTrades]       = useState<Trade[]>([])
   const [loading, setLoading]     = useState(true)
@@ -167,7 +175,7 @@ export default function DiarioPage() {
   )
 }
 
-// ─── Day summary pill ──────────────────────────────────────────────────────────
+// ─── Day summary pill ─────────────────────────────────────────────────────────
 
 function DaySummaryPill({ trades }: { trades: Trade[] }) {
   const pnl    = trades.reduce((s, t) => s + t.pnl, 0)
