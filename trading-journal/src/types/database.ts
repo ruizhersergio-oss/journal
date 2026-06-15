@@ -74,7 +74,7 @@ export type IctConfluence =
   | 'Volume Climax'
   | 'POC Migration'
 
-export type TradeType = 'real' | 'backtest'
+export type TradeType = 'real' | 'backtest' | 'demo_destacado'
 
 export type AccountStatus = 'activa' | 'funded' | 'breached' | 'completada'
 
@@ -136,6 +136,9 @@ export interface Trade {
   notes: string | null
   image_url: string | null
   image_url_2: string | null
+  image_url_3: string | null
+  image_url_4: string | null
+  image_url_5: string | null
 }
 
 export interface Database {

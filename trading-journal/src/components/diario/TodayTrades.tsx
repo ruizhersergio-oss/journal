@@ -26,9 +26,11 @@ export default function TodayTrades({ trades, onEdit, onDelete, date }: TodayTra
     onDelete()
   }
 
-  const totalPnl = trades.reduce((s, t) => s + t.pnl, 0)
-  const wins      = trades.filter(t => t.result === 'win').length
-  const losses    = trades.filter(t => t.result === 'loss').length
+  // Demo destacado excluded from totals
+  const countableTrades = trades.filter(t => (t.trade_type ?? 'real') !== 'demo_destacado')
+  const totalPnl = countableTrades.reduce((s, t) => s + t.pnl, 0)
+  const wins      = countableTrades.filter(t => t.result === 'win').length
+  const losses    = countableTrades.filter(t => t.result === 'loss').length
   const winRate   = wins + losses > 0 ? (wins / (wins + losses)) * 100 : 0
 
   return (
@@ -59,17 +61,33 @@ export default function TodayTrades({ trades, onEdit, onDelete, date }: TodayTra
       ) : (
         <div className="divide-y divide-[#2a2d3a]">
           {trades.map(trade => {
-            const expanded = expandedId === trade.id
+            const expanded   = expandedId === trade.id
             const isDeleting = deletingId === trade.id
+            const isDemo     = (trade.trade_type ?? 'real') === 'demo_destacado'
+            const imageUrls  = [
+              trade.image_url, trade.image_url_2, trade.image_url_3,
+              trade.image_url_4, trade.image_url_5,
+            ].filter(Boolean) as string[]
 
             return (
-              <div key={trade.id} className="hover:bg-[#1f2230] transition-colors">
+              <div
+                key={trade.id}
+                className={cn(
+                  'hover:bg-[#1f2230] transition-colors',
+                  isDemo && 'border-l-2 border-l-[#f59e0b]'
+                )}
+              >
                 {/* Main row */}
                 <div className="flex items-center gap-3 px-5 py-3">
-                  {/* Backtest badge */}
+                  {/* Type badge */}
                   {(trade.trade_type ?? 'real') === 'backtest' && (
                     <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#a855f7]/10 text-[#a855f7] border border-[#a855f7]/20 shrink-0">
                       BT
+                    </span>
+                  )}
+                  {isDemo && (
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#f59e0b]/10 text-[#f59e0b] border border-[#f59e0b]/20 shrink-0">
+                      DD
                     </span>
                   )}
 
@@ -119,12 +137,21 @@ export default function TodayTrades({ trades, onEdit, onDelete, date }: TodayTra
                   </span>
 
                   {/* P&L */}
-                  <span className={cn(
-                    'text-sm font-bold w-24 text-right shrink-0',
-                    trade.pnl > 0 ? 'text-[#26de81]' : trade.pnl < 0 ? 'text-[#fc5c65]' : 'text-[#f7c948]'
-                  )}>
-                    {trade.pnl >= 0 ? '+' : ''}{formatCurrency(trade.pnl)}
-                  </span>
+                  {isDemo ? (
+                    <span
+                      className="text-sm font-bold w-24 text-right shrink-0 text-[#4b5563] line-through"
+                      title="P&L demo — no computa en métricas"
+                    >
+                      {trade.pnl >= 0 ? '+' : ''}{formatCurrency(trade.pnl)}
+                    </span>
+                  ) : (
+                    <span className={cn(
+                      'text-sm font-bold w-24 text-right shrink-0',
+                      trade.pnl > 0 ? 'text-[#26de81]' : trade.pnl < 0 ? 'text-[#fc5c65]' : 'text-[#f7c948]'
+                    )}>
+                      {trade.pnl >= 0 ? '+' : ''}{formatCurrency(trade.pnl)}
+                    </span>
+                  )}
 
                   {/* Kill zone badge */}
                   {trade.kill_zone && (
@@ -134,7 +161,7 @@ export default function TodayTrades({ trades, onEdit, onDelete, date }: TodayTra
                   )}
 
                   {/* Image indicator */}
-                  {(trade.image_url || trade.image_url_2) && (
+                  {imageUrls.length > 0 && (
                     <ImageIcon size={12} className="text-[#4b5563] shrink-0" />
                   )}
 
@@ -168,6 +195,12 @@ export default function TodayTrades({ trades, onEdit, onDelete, date }: TodayTra
                 {/* Expanded detail */}
                 {expanded && (
                   <div className="px-5 pb-4 space-y-3 bg-[#13151c]/60">
+                    {isDemo && (
+                      <p className="text-[10px] text-[#f59e0b] bg-[#f59e0b]/10 border border-[#f59e0b]/20 rounded px-2 py-1 inline-block">
+                        Demo destacado — P&L no computa en métricas del dashboard ni totales del día
+                      </p>
+                    )}
+
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                       {trade.dol_type && (
                         <div>
@@ -209,26 +242,26 @@ export default function TodayTrades({ trades, onEdit, onDelete, date }: TodayTra
                       </div>
                     )}
 
-                    {(trade.image_url || trade.image_url_2) && (
+                    {imageUrls.length > 0 && (
                       <div>
-                        <p className="text-[#6b7280] text-xs mb-2">Gráfico{trade.image_url && trade.image_url_2 ? 's' : ''}</p>
-                        <div className={cn('gap-3', trade.image_url && trade.image_url_2 ? 'grid grid-cols-2' : 'flex')}>
-                          {trade.image_url && (
+                        <p className="text-[#6b7280] text-xs mb-2">
+                          Gráfico{imageUrls.length > 1 ? 's' : ''}
+                        </p>
+                        <div className={cn(
+                          'gap-3',
+                          imageUrls.length === 1 ? 'flex' :
+                          imageUrls.length === 2 ? 'grid grid-cols-2' :
+                          'grid grid-cols-3'
+                        )}>
+                          {imageUrls.map((url, i) => (
                             /* eslint-disable-next-line @next/next/no-img-element */
                             <img
-                              src={trade.image_url}
-                              alt="Trade chart 1"
+                              key={i}
+                              src={url}
+                              alt={`Trade chart ${i + 1}`}
                               className="max-h-80 rounded-lg border border-[#2a2d3a] object-contain w-full"
                             />
-                          )}
-                          {trade.image_url_2 && (
-                            /* eslint-disable-next-line @next/next/no-img-element */
-                            <img
-                              src={trade.image_url_2}
-                              alt="Trade chart 2"
-                              className="max-h-80 rounded-lg border border-[#2a2d3a] object-contain w-full"
-                            />
-                          )}
+                          ))}
                         </div>
                       </div>
                     )}

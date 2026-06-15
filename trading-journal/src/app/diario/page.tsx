@@ -178,9 +178,10 @@ function DiarioContent() {
 // ─── Day summary pill ─────────────────────────────────────────────────────────
 
 function DaySummaryPill({ trades }: { trades: Trade[] }) {
-  const pnl    = trades.reduce((s, t) => s + t.pnl, 0)
-  const wins   = trades.filter(t => t.result === 'win').length
-  const losses = trades.filter(t => t.result === 'loss').length
+  const countable = trades.filter(t => (t.trade_type ?? 'real') !== 'demo_destacado')
+  const pnl    = countable.reduce((s, t) => s + t.pnl, 0)
+  const wins   = countable.filter(t => t.result === 'win').length
+  const losses = countable.filter(t => t.result === 'loss').length
   const wr     = wins + losses > 0 ? Math.round((wins / (wins + losses)) * 100) : 0
 
   return (

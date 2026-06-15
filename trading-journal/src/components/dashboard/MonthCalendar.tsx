@@ -26,16 +26,11 @@ export default function MonthCalendar({ dayMap, showR = false, unit = 'currency'
   const monthEnd   = endOfMonth(currentDate)
   const days       = eachDayOfInterval({ start: monthStart, end: monthEnd })
 
-  // Monday-first offset
   const startDow = (getDay(monthStart) + 6) % 7
-
-  const cells: (Date | null)[] = [
-    ...Array(startDow).fill(null),
-    ...days,
-  ]
-  // Pad to complete last row
+  const cells: (Date | null)[] = [...Array(startDow).fill(null), ...days]
   while (cells.length % 7 !== 0) cells.push(null)
 
+  // Monthly net uses real P&L only (dayMap.pnl is real-only)
   const netMonth = Array.from(dayMap.values())
     .filter(d => d.date.startsWith(format(currentDate, 'yyyy-MM')))
     .reduce((s, d) => s + d.pnl, 0)
@@ -94,29 +89,42 @@ export default function MonthCalendar({ dayMap, showR = false, unit = 'currency'
             return <div key={`empty-${idx}`} className="border-b border-r border-[#2a2d3a] min-h-[80px]" />
           }
 
-          const key      = format(date, 'yyyy-MM-dd')
-          const data     = dayMap.get(key)
-          const isToday_ = isToday(date)
-          const inMonth  = isSameMonth(date, currentDate)
+          const key       = format(date, 'yyyy-MM-dd')
+          const data      = dayMap.get(key)
+          const isToday_  = isToday(date)
+          const inMonth   = isSameMonth(date, currentDate)
 
-          const hasTrades = !!data
-          const isPos     = hasTrades && data.pnl > 0
-          const isNeg     = hasTrades && data.pnl < 0
+          const hasTrades  = !!data
+          const isDemoOnly = hasTrades && data.hasDemo && !data.hasReal
+          const hasMixed   = hasTrades && data.hasDemo && data.hasReal
+          const isPos      = hasTrades && data.pnl > 0
+          const isNeg      = hasTrades && data.pnl < 0
 
           return (
             <div
               key={key}
               onClick={() => hasTrades && onDayClick?.(key)}
               className={cn(
-                'border-b border-r border-[#2a2d3a] min-h-[80px] p-2 flex flex-col transition-colors',
+                'relative border-b border-r border-[#2a2d3a] min-h-[80px] p-2 flex flex-col transition-colors',
                 !inMonth && 'opacity-30',
-                hasTrades && isPos && 'bg-[#26de81]/5 hover:bg-[#26de81]/10',
-                hasTrades && isNeg && 'bg-[#fc5c65]/5 hover:bg-[#fc5c65]/10',
+                // Real trades color (has priority)
+                !isDemoOnly && isPos && 'bg-[#26de81]/5 hover:bg-[#26de81]/10',
+                !isDemoOnly && isNeg && 'bg-[#fc5c65]/5 hover:bg-[#fc5c65]/10',
+                // Demo-only color
+                isDemoOnly && 'bg-[#f59e0b]/5 hover:bg-[#f59e0b]/10',
                 !hasTrades && 'hover:bg-[#1f2230]',
                 isToday_ && 'ring-1 ring-inset ring-[#4f8ef7]/50',
                 hasTrades && onDayClick && 'cursor-pointer'
               )}
             >
+              {/* Gold dot for mixed days (real + demo) */}
+              {hasMixed && (
+                <span
+                  className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#f59e0b]"
+                  title="Incluye trades demo destacado"
+                />
+              )}
+
               {/* Day number */}
               <div className="flex items-center justify-between mb-1">
                 <span
@@ -124,7 +132,9 @@ export default function MonthCalendar({ dayMap, showR = false, unit = 'currency'
                     'text-xs font-medium w-5 h-5 flex items-center justify-center rounded-full',
                     isToday_
                       ? 'bg-[#4f8ef7] text-white'
-                      : 'text-[#6b7280]'
+                      : isDemoOnly
+                        ? 'text-[#f59e0b]'
+                        : 'text-[#6b7280]'
                   )}
                 >
                   {format(date, 'd')}
@@ -134,26 +144,35 @@ export default function MonthCalendar({ dayMap, showR = false, unit = 'currency'
                 )}
               </div>
 
-              {/* P&L */}
+              {/* Content */}
               {hasTrades && (
-                <>
-                  <span
-                    className={cn(
-                      'text-xs font-bold leading-none',
-                      isPos ? 'text-[#26de81]' : 'text-[#fc5c65]'
-                    )}
-                  >
-                    {unit === 'R'
-                      ? `${data.pnl >= 0 ? '+' : ''}${data.pnl.toFixed(2)}R`
-                      : showR
-                        ? `${data.pnl >= 0 ? '+' : ''}${(data.pnl / 100).toFixed(1)}R`
-                        : `${data.pnl >= 0 ? '+' : ''}${formatCurrency(data.pnl)}`
-                    }
-                  </span>
-                  <span className="text-[10px] text-[#6b7280] mt-0.5">
-                    {formatPercent(data.winRate)}
-                  </span>
-                </>
+                isDemoOnly ? (
+                  <>
+                    <span className="text-[10px] text-[#f59e0b] font-medium">demo</span>
+                    <span className="text-[10px] text-[#6b7280] mt-0.5">
+                      {formatPercent(data.winRate)}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span
+                      className={cn(
+                        'text-xs font-bold leading-none',
+                        isPos ? 'text-[#26de81]' : 'text-[#fc5c65]'
+                      )}
+                    >
+                      {unit === 'R'
+                        ? `${data.pnl >= 0 ? '+' : ''}${data.pnl.toFixed(2)}R`
+                        : showR
+                          ? `${data.pnl >= 0 ? '+' : ''}${(data.pnl / 100).toFixed(1)}R`
+                          : `${data.pnl >= 0 ? '+' : ''}${formatCurrency(data.pnl)}`
+                      }
+                    </span>
+                    <span className="text-[10px] text-[#6b7280] mt-0.5">
+                      {formatPercent(data.winRate)}
+                    </span>
+                  </>
+                )
               )}
             </div>
           )

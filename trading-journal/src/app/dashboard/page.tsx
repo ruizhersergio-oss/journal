@@ -29,7 +29,7 @@ export default function DashboardPage() {
 
   const fetchTrades = useCallback(async () => {
     setLoading(true)
-    let query = supabase.from('trades').select('*').eq('trade_type', 'real').order('date', { ascending: false })
+    let query = supabase.from('trades').select('*').in('trade_type', ['real', 'demo_destacado']).order('date', { ascending: false })
 
     if (filter === 'today') {
       const today = format(new Date(), 'yyyy-MM-dd')
@@ -110,7 +110,7 @@ export default function DashboardPage() {
           <MetricCard
             label="NET P&L"
             value={showR ? formatR(metrics.totalR) : formatCurrency(metrics.netPnl)}
-            sub={`${metrics.totalTrades} trades`}
+            sub={`${trades.filter(t => (t.trade_type ?? 'real') === 'real').length} trades reales`}
             trend={pnlTrend(metrics.netPnl)}
             highlight
           />
@@ -198,8 +198,10 @@ export default function DashboardPage() {
 
 function getWeeklySummary(trades: Trade[]) {
   const weekMap = new Map<string, { label: string; pnl: number; trades: number; wins: number; losses: number }>()
+  // Weekly panel shows real P&L; demo_destacado excluded
+  const realTrades = trades.filter(t => (t.trade_type ?? 'real') === 'real')
 
-  for (const t of trades) {
+  for (const t of realTrades) {
     const date = new Date(t.date)
     const day  = date.getDay()
     const diff = (day === 0 ? -6 : 1) - day

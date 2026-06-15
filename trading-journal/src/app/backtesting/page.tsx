@@ -86,6 +86,7 @@ export default function BacktestingPage() {
     for (const t of allTrades) {
       const d = map.get(t.date) ?? {
         date: t.date, pnl: 0, trades: 0, wins: 0, losses: 0, winRate: 0,
+        hasReal: false, hasDemo: false,
       }
       d.pnl    += t.rr
       d.trades += 1

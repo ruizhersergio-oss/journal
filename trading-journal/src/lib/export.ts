@@ -24,6 +24,7 @@ export function tradesToCSV(trades: Trade[]): string {
     'result', 'pnl', 'rr',
     'confluences', 'dol_type', 'kill_zone',
     'comment', 'notes',
+    'image_url', 'image_url_2', 'image_url_3', 'image_url_4', 'image_url_5',
   ]
 
   const rows = trades.map(t => [
@@ -43,6 +44,11 @@ export function tradesToCSV(trades: Trade[]): string {
     t.kill_zone ?? '',
     csvEscape(t.comment ?? ''),
     csvEscape(t.notes   ?? ''),
+    t.image_url   ?? '',
+    t.image_url_2 ?? '',
+    t.image_url_3 ?? '',
+    t.image_url_4 ?? '',
+    t.image_url_5 ?? '',
   ])
 
   return [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n')
