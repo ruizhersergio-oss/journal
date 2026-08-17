@@ -8,7 +8,8 @@ import { cn, formatCurrency, formatPercent } from '@/lib/utils'
 import DolCard from '@/components/dol-stats/DolCard'
 import DolTable from '@/components/dol-stats/DolTable'
 import type { DolStat } from '@/components/dol-stats/DolCard'
-import type { Trade, DolType } from '@/types/database'
+import { TARGET_TYPES } from '@/types/database'
+import type { Trade, TargetType } from '@/types/database'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -21,20 +22,13 @@ const TIME_FILTERS: { key: TimeFilter; label: string }[] = [
   { key: 'all',   label: 'Todo' },
 ]
 
-const ALL_DOL_TYPES: DolType[] = [
-  // ICT / Liquidez
-  'SSL', 'BSL', 'Equal Highs', 'Equal Lows',
-  'NY Opening Gap', 'Relative Equal Highs', 'Relative Equal Lows',
-  'Data Highs', 'Data Lows',
-  // Volume Profile
-  'POC Diario', 'POC Semanal', 'VAH', 'VAL', 'HVN', 'LVN',
-]
+const ALL_TARGET_TYPES: TargetType[] = [...TARGET_TYPES]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function buildStats(trades: Trade[]): DolStat[] {
-  return ALL_DOL_TYPES.map(dol => {
-    const subset = trades.filter(t => t.dol_type === dol)
+  return ALL_TARGET_TYPES.map(dol => {
+    const subset = trades.filter(t => t.target === dol)
     const wins   = subset.filter(t => t.result === 'win')
     const losses = subset.filter(t => t.result === 'loss')
     const be     = subset.filter(t => t.result === 'BE')
@@ -72,7 +66,7 @@ export default function DolStatsPage() {
       .from('trades')
       .select('*')
       .in('trade_type', ['real', 'demo_destacado'])
-      .not('dol_type', 'is', null)
+      .not('target', 'is', null)
 
     if (filter === 'today') {
       query = query.eq('date', format(new Date(), 'yyyy-MM-dd'))

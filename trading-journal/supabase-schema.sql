@@ -7,11 +7,16 @@
 CREATE TYPE trade_direction AS ENUM ('long', 'short');
 CREATE TYPE trade_result    AS ENUM ('win', 'loss', 'BE');
 CREATE TYPE trade_symbol    AS ENUM ('MNQ', 'NQ', 'ES', 'MES');
-CREATE TYPE kill_zone       AS ENUM ('London', 'NY Open', 'NY AM', 'NY PM');
-CREATE TYPE dol_type        AS ENUM (
-  'SSL', 'BSL', 'Equal Highs', 'Equal Lows',
-  'NY Opening Gap', 'Relative Equal Highs', 'Relative Equal Lows',
-  'Data Highs', 'Data Lows'
+CREATE TYPE kill_zone       AS ENUM ('London', 'NY', 'Asia', 'Oceania');
+CREATE TYPE target_type     AS ENUM (
+  'Big Trade Comprador', 'Big Trade Vendedor', 'Big Trade',
+  'VAL diario', 'VAL RTH', 'VAL día anterior', 'VAL horario', 'VAL semanal', 'VAL mensual',
+  'VAH diario', 'VAH RTH', 'VAH día anterior', 'VAH horario', 'VAH semanal', 'VAH mensual',
+  'POC horario', 'POC diario', 'POC semanal', 'POC mensual',
+  'VWAP ETH', 'VWAP RTH', 'VWAP día anterior', 'VWAP semanal', 'VWAP mensual',
+  'IB High 30min', 'IB High 1h', 'IB Low 30min', 'IB Low 1h',
+  'HVN', 'LVN',
+  'TPO'
 );
 CREATE TYPE account_status  AS ENUM ('activa', 'breached', 'funded');
 
@@ -36,7 +41,7 @@ CREATE TABLE trades (
   rr            NUMERIC(8, 3) NOT NULL,
 
   confluences   TEXT[] DEFAULT '{}',
-  dol_type      dol_type,
+  target        target_type,
   kill_zone     kill_zone,
 
   comment       TEXT,
@@ -48,8 +53,17 @@ CREATE TABLE trades (
 -- Índices útiles para el dashboard
 CREATE INDEX idx_trades_date       ON trades(date DESC);
 CREATE INDEX idx_trades_result     ON trades(result);
-CREATE INDEX idx_trades_dol_type   ON trades(dol_type);
+CREATE INDEX idx_trades_target     ON trades(target);
 CREATE INDEX idx_trades_symbol     ON trades(symbol);
+
+-- ============================================================
+-- TABLA: custom_confluences
+-- ============================================================
+CREATE TABLE custom_confluences (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  label      TEXT NOT NULL UNIQUE
+);
 
 -- ============================================================
 -- TABLA: funding_accounts
@@ -90,10 +104,10 @@ FROM trades
 GROUP BY date
 ORDER BY date DESC;
 
--- Win rate por tipo de DOL
+-- Win rate por tipo de target
 CREATE VIEW dol_stats AS
 SELECT
-  dol_type,
+  target,
   COUNT(*)                                                  AS total_trades,
   COUNT(*) FILTER (WHERE result = 'win')                    AS wins,
   COUNT(*) FILTER (WHERE result = 'loss')                   AS losses,
@@ -104,8 +118,8 @@ SELECT
   )                                                         AS win_rate,
   AVG(rr) FILTER (WHERE result = 'win')                     AS avg_win_rr
 FROM trades
-WHERE dol_type IS NOT NULL
-GROUP BY dol_type
+WHERE target IS NOT NULL
+GROUP BY target
 ORDER BY total_trades DESC;
 
 -- ============================================================

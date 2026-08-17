@@ -1,82 +1,82 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
-export type DolType =
-  // Asia Session
-  | 'Asia High'
-  | 'Asia Low'
-  // London Session
-  | 'London High'
-  | 'London Low'
-  // NY Session
-  | 'NY High'
-  | 'NY Low'
-  | 'NY Opening Gap'
-  // Liquidez ICT
-  | 'SSL'
-  | 'BSL'
-  | 'Equal Highs'
-  | 'Equal Lows'
-  | 'Relative Equal Highs'
-  | 'Relative Equal Lows'
-  | 'Old High'
-  | 'Old Low'
-  | 'Daily High'
-  | 'Daily Low'
-  | 'Weekly High'
-  | 'Weekly Low'
-  | 'Monthly High'
-  | 'Monthly Low'
-  // Volume Profile
-  | 'POC Diario'
-  | 'POC Semanal'
-  | 'POC Mensual'
-  | 'POC Ayer'
-  | 'VAH'
-  | 'VAL'
-  | 'HVN'
-  | 'LVN'
-  // Estructura
-  | 'Previous Day High'
-  | 'Previous Day Low'
-  | 'Previous Week High'
-  | 'Previous Week Low'
-  // Legacy
-  | 'Data Highs'
-  | 'Data Lows'
+export const TARGET_TYPES = [
+  // Big Trades
+  'Big Trade Comprador',
+  'Big Trade Vendedor',
+  'Big Trade',
+  // VAL
+  'VAL diario',
+  'VAL RTH',
+  'VAL día anterior',
+  'VAL horario',
+  'VAL semanal',
+  'VAL mensual',
+  // VAH
+  'VAH diario',
+  'VAH RTH',
+  'VAH día anterior',
+  'VAH horario',
+  'VAH semanal',
+  'VAH mensual',
+  // POC
+  'POC horario',
+  'POC diario',
+  'POC semanal',
+  'POC mensual',
+  // VWAP
+  'VWAP ETH',
+  'VWAP RTH',
+  'VWAP día anterior',
+  'VWAP semanal',
+  'VWAP mensual',
+  // Initial Balance
+  'IB High 30min',
+  'IB High 1h',
+  'IB Low 30min',
+  'IB Low 1h',
+  // Nodos
+  'HVN',
+  'LVN',
+  // TPO
+  'TPO',
+  // Gaps
+  'NDOG',
+  'NWOG',
+  'NMOG',
+] as const
+export type TargetType = typeof TARGET_TYPES[number]
 
-export type KillZone = 'London' | 'NY Open' | 'NY AM' | 'NY PM'
+export const KILL_ZONES = ['London', 'NY', 'Asia', 'Oceania'] as const
+export type KillZone = typeof KILL_ZONES[number]
 
-export type TradeDirection = 'long' | 'short'
+export const TRADE_DIRECTIONS = ['long', 'short'] as const
+export type TradeDirection = typeof TRADE_DIRECTIONS[number]
 
-export type TradeResult = 'win' | 'loss' | 'BE'
+export const TRADE_RESULTS = ['win', 'loss', 'BE'] as const
+export type TradeResult = typeof TRADE_RESULTS[number]
 
-export type Symbol = 'MNQ' | 'NQ' | 'ES' | 'MES'
+export const SYMBOLS = ['MNQ', 'NQ', 'ES', 'MES'] as const
+export type Symbol = typeof SYMBOLS[number]
 
-export type IctConfluence =
-  | 'FVG'
-  | 'OB'
-  | 'MSS'
-  | 'SSL sweep'
-  | 'BSL sweep'
-  | 'Judas Swing'
-  | 'AMD'
-  | 'CISD'
-  | 'Protected Swing'
-  | 'VWAP'
-  | 'otros'
-  | 'Absorción'
-  | 'Order Flow Delta'
-  | 'Imbalance (Bid/Ask)'
-  | 'Stacked Imbalances'
-  | 'Delta Divergence'
-  | 'Iceberg Order'
-  | 'Exhaustion'
-  | 'Volume Climax'
-  | 'POC Migration'
+export const ORDER_FLOW_CONFLUENCES = [
+  'Absorción',
+  'Order Flow Delta',
+  'Imbalance (Bid/Ask)',
+  'Stacked Imbalances',
+  'Delta Divergence',
+  'Iceberg Order',
+  'Exhaustion',
+  'Volume Climax',
+  'POC Migration',
+] as const
+export type OrderFlowConfluence = typeof ORDER_FLOW_CONFLUENCES[number]
 
-export type TradeType = 'real' | 'backtest' | 'demo_destacado'
+export const TRADE_TYPES = ['real', 'backtest', 'demo_destacado'] as const
+export type TradeType = typeof TRADE_TYPES[number]
 
-export type AccountStatus = 'activa' | 'funded' | 'breached' | 'completada'
+export const ACCOUNT_STATUSES = ['activa', 'funded', 'breached', 'completada'] as const
+export type AccountStatus = typeof ACCOUNT_STATUSES[number]
 
 export const PROP_FIRMS = [
   'Lucid Trading',
@@ -114,6 +114,12 @@ export interface AccountWithPayouts extends FundingAccount {
   net_pnl:       number
 }
 
+export interface CustomConfluence {
+  id:         string
+  label:      string
+  created_at: string
+}
+
 export interface Trade {
   id: string
   created_at: string
@@ -129,8 +135,8 @@ export interface Trade {
   result: TradeResult
   pnl: number
   rr: number
-  confluences: IctConfluence[]
-  dol_type: DolType | null
+  confluences: string[]
+  target: TargetType | null
   kill_zone: KillZone | null
   comment: string | null
   notes: string | null
@@ -158,6 +164,11 @@ export interface Database {
         Row: Payout
         Insert: Omit<Payout, 'id' | 'created_at'>
         Update: Partial<Omit<Payout, 'id' | 'created_at'>>
+      }
+      custom_confluences: {
+        Row: CustomConfluence
+        Insert: Omit<CustomConfluence, 'id' | 'created_at'>
+        Update: Partial<Omit<CustomConfluence, 'id' | 'created_at'>>
       }
     }
   }

@@ -5,6 +5,7 @@ import { format } from 'date-fns'
 import { Pencil, Trash2, ChevronDown, ChevronUp, ImageIcon } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { cn, formatCurrency } from '@/lib/utils'
+import ImageLightbox from '@/components/ui/ImageLightbox'
 import type { Trade } from '@/types/database'
 
 interface TodayTradesProps {
@@ -17,6 +18,7 @@ interface TodayTradesProps {
 export default function TodayTrades({ trades, onEdit, onDelete, date }: TodayTradesProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null)
 
   async function handleDelete(id: string) {
     if (!confirm('¿Eliminar este trade?')) return
@@ -202,10 +204,10 @@ export default function TodayTrades({ trades, onEdit, onDelete, date }: TodayTra
                     )}
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                      {trade.dol_type && (
+                      {trade.target && (
                         <div>
-                          <p className="text-[#6b7280]">DOL objetivo</p>
-                          <p className="text-[#e8eaf0] font-medium mt-0.5">{trade.dol_type}</p>
+                          <p className="text-[#6b7280]">Target</p>
+                          <p className="text-[#e8eaf0] font-medium mt-0.5">{trade.target}</p>
                         </div>
                       )}
                       {trade.kill_zone && (
@@ -259,7 +261,8 @@ export default function TodayTrades({ trades, onEdit, onDelete, date }: TodayTra
                               key={i}
                               src={url}
                               alt={`Trade chart ${i + 1}`}
-                              className="max-h-80 rounded-lg border border-[#2a2d3a] object-contain w-full"
+                              onClick={() => setLightbox({ images: imageUrls, index: i })}
+                              className="max-h-80 rounded-lg border border-[#2a2d3a] object-contain w-full cursor-zoom-in hover:border-[#3a3d4a] transition-colors"
                             />
                           ))}
                         </div>
@@ -271,6 +274,15 @@ export default function TodayTrades({ trades, onEdit, onDelete, date }: TodayTra
             )
           })}
         </div>
+      )}
+
+      {lightbox && (
+        <ImageLightbox
+          images={lightbox.images}
+          index={lightbox.index}
+          onClose={() => setLightbox(null)}
+          onIndexChange={(index) => setLightbox(prev => prev && { ...prev, index })}
+        />
       )}
     </div>
   )

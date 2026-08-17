@@ -7,60 +7,58 @@ import { supabase } from '@/lib/supabase'
 import { calcRR, calcPnl } from '@/lib/calculations'
 import { cn, formatCurrency } from '@/lib/utils'
 import { FormField, Input, Textarea, Select } from '@/components/ui/FormField'
+import ImageLightbox from '@/components/ui/ImageLightbox'
 import type {
   Trade, Symbol, TradeDirection, TradeResult,
-  KillZone, DolType, IctConfluence, TradeType,
+  KillZone, TargetType, TradeType, CustomConfluence,
 } from '@/types/database'
+import { ORDER_FLOW_CONFLUENCES } from '@/types/database'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const SYMBOLS: Symbol[]      = ['MNQ', 'NQ', 'ES', 'MES']
-const KILL_ZONES: KillZone[] = ['London', 'NY Open', 'NY AM', 'NY PM']
+const KILL_ZONES: KillZone[] = ['London', 'NY', 'Asia', 'Oceania']
 
-const DOL_GROUPS: { label: string; options: DolType[] }[] = [
+const TARGET_GROUPS: { label: string; options: TargetType[] }[] = [
   {
-    label: 'Asia Session',
-    options: ['Asia High', 'Asia Low'],
+    label: 'Big Trades',
+    options: ['Big Trade Comprador', 'Big Trade Vendedor', 'Big Trade'],
   },
   {
-    label: 'London Session',
-    options: ['London High', 'London Low'],
+    label: 'VAL',
+    options: ['VAL diario', 'VAL RTH', 'VAL día anterior', 'VAL horario', 'VAL semanal', 'VAL mensual'],
   },
   {
-    label: 'NY Session',
-    options: ['NY High', 'NY Low', 'NY Opening Gap'],
+    label: 'VAH',
+    options: ['VAH diario', 'VAH RTH', 'VAH día anterior', 'VAH horario', 'VAH semanal', 'VAH mensual'],
   },
   {
-    label: 'Liquidez ICT',
-    options: [
-      'SSL', 'BSL', 'Equal Highs', 'Equal Lows',
-      'Relative Equal Highs', 'Relative Equal Lows',
-      'Old High', 'Old Low',
-      'Daily High', 'Daily Low',
-      'Weekly High', 'Weekly Low',
-      'Monthly High', 'Monthly Low',
-    ],
+    label: 'POC',
+    options: ['POC horario', 'POC diario', 'POC semanal', 'POC mensual'],
   },
   {
-    label: 'Volume Profile',
-    options: ['POC Diario', 'POC Semanal', 'POC Mensual', 'POC Ayer', 'VAH', 'VAL', 'HVN', 'LVN'],
+    label: 'VWAP',
+    options: ['VWAP ETH', 'VWAP RTH', 'VWAP día anterior', 'VWAP semanal', 'VWAP mensual'],
   },
   {
-    label: 'Estructura',
-    options: ['Previous Day High', 'Previous Day Low', 'Previous Week High', 'Previous Week Low'],
+    label: 'Initial Balance',
+    options: ['IB High 30min', 'IB High 1h', 'IB Low 30min', 'IB Low 1h'],
+  },
+  {
+    label: 'Nodos',
+    options: ['HVN', 'LVN'],
+  },
+  {
+    label: 'TPO',
+    options: ['TPO'],
+  },
+  {
+    label: 'Gaps',
+    options: ['NDOG', 'NWOG', 'NMOG'],
   },
 ]
 
-const CONFLUENCE_GROUPS: { label: string; items: IctConfluence[] }[] = [
-  {
-    label: 'ICT',
-    items: ['FVG', 'OB', 'MSS', 'SSL sweep', 'BSL sweep', 'Judas Swing', 'AMD', 'CISD', 'Protected Swing', 'VWAP', 'otros'],
-  },
-  {
-    label: 'Order Flow',
-    items: ['Absorción', 'Order Flow Delta', 'Imbalance (Bid/Ask)', 'Stacked Imbalances', 'Delta Divergence', 'Iceberg Order', 'Exhaustion', 'Volume Climax', 'POC Migration'],
-  },
-]
+const FIXED_CONFLUENCES: string[] = [...ORDER_FLOW_CONFLUENCES]
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -78,8 +76,8 @@ interface FormState {
   pnl:          string
   rr:           string
   kill_zone:    KillZone | ''
-  dol_type:     DolType  | ''
-  confluences:  IctConfluence[]
+  target:       TargetType | ''
+  confluences:  string[]
   comment:      string
   notes:        string
   image_url:    string | null
@@ -103,7 +101,7 @@ const defaultForm = (tradeType: TradeType = 'real'): FormState => ({
   pnl:         '',
   rr:          '',
   kill_zone:   '',
-  dol_type:    '',
+  target:      '',
   confluences: [],
   comment:     '',
   notes:       '',
@@ -134,11 +132,16 @@ export default function TradeForm({ editTrade, onSaved, onCancel, defaultTradeTy
   const [uploading4, setUploading4] = useState(false)
   const [uploading5, setUploading5] = useState(false)
   const [errors, setErrors]     = useState<Partial<Record<keyof FormState, string>>>({})
+  const [customConfluences, setCustomConfluences]         = useState<CustomConfluence[]>([])
+  const [customConfluenceInput, setCustomConfluenceInput] = useState('')
+  const [addingConfluence, setAddingConfluence]           = useState(false)
+  const [deletingConfluenceId, setDeletingConfluenceId]   = useState<string | null>(null)
   const [imagePreview,  setImagePreview]  = useState<string | null>(null)
   const [imagePreview2, setImagePreview2] = useState<string | null>(null)
   const [imagePreview3, setImagePreview3] = useState<string | null>(null)
   const [imagePreview4, setImagePreview4] = useState<string | null>(null)
   const [imagePreview5, setImagePreview5] = useState<string | null>(null)
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const fileRef  = useRef<HTMLInputElement>(null)
   const fileRef2 = useRef<HTMLInputElement>(null)
   const fileRef3 = useRef<HTMLInputElement>(null)
@@ -162,8 +165,8 @@ export default function TradeForm({ editTrade, onSaved, onCancel, defaultTradeTy
         pnl:         String(editTrade.pnl),
         rr:          String(editTrade.rr),
         kill_zone:   editTrade.kill_zone ?? '',
-        dol_type:    editTrade.dol_type  ?? '',
-        confluences: (editTrade.confluences ?? []) as IctConfluence[],
+        target:      editTrade.target    ?? '',
+        confluences: editTrade.confluences ?? [],
         comment:     editTrade.comment   ?? '',
         notes:       editTrade.notes     ?? '',
         image_url:   editTrade.image_url   ?? null,
@@ -179,6 +182,58 @@ export default function TradeForm({ editTrade, onSaved, onCancel, defaultTradeTy
       if (editTrade.image_url_5) setImagePreview5(editTrade.image_url_5)
     }
   }, [editTrade])
+
+  // Fetch custom confluence tags
+  useEffect(() => {
+    supabase
+      .from('custom_confluences')
+      .select('*')
+      .order('label', { ascending: true })
+      .then(({ data, error }) => {
+        if (!error && data) setCustomConfluences(data as CustomConfluence[])
+      })
+  }, [])
+
+  async function addCustomConfluence() {
+    const label = customConfluenceInput.trim()
+    if (!label) return
+
+    const normalized = label.toLowerCase()
+    const existingFixed  = FIXED_CONFLUENCES.find(c => c.toLowerCase() === normalized)
+    const existingCustom = customConfluences.find(c => c.label.toLowerCase() === normalized)
+    const existing = existingFixed ?? existingCustom?.label
+
+    if (existing) {
+      if (!form.confluences.includes(existing)) toggleConfluence(existing)
+      setCustomConfluenceInput('')
+      return
+    }
+
+    setAddingConfluence(true)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const table = supabase.from('custom_confluences') as any
+    const { data, error } = await table.insert({ label }).select().single()
+    setAddingConfluence(false)
+
+    if (!error && data) {
+      setCustomConfluences(prev => [...prev, data as CustomConfluence].sort((a, b) => a.label.localeCompare(b.label)))
+      toggleConfluence((data as CustomConfluence).label)
+      setCustomConfluenceInput('')
+    }
+  }
+
+  async function deleteCustomConfluence(c: CustomConfluence) {
+    if (!confirm(`¿Eliminar el tag "${c.label}"? Ya no aparecerá como sugerencia, pero los trades que ya lo tengan guardado no se modifican.`)) return
+
+    setDeletingConfluenceId(c.id)
+    const { error } = await supabase.from('custom_confluences').delete().eq('id', c.id)
+    setDeletingConfluenceId(null)
+
+    if (!error) {
+      setCustomConfluences(prev => prev.filter(x => x.id !== c.id))
+      if (form.confluences.includes(c.label)) toggleConfluence(c.label)
+    }
+  }
 
   // Auto-calculate RR and P&L when prices change
   useEffect(() => {
@@ -198,7 +253,7 @@ export default function TradeForm({ editTrade, onSaved, onCancel, defaultTradeTy
     if (errors[key]) setErrors(e => ({ ...e, [key]: undefined }))
   }
 
-  function toggleConfluence(c: IctConfluence) {
+  function toggleConfluence(c: string) {
     setForm(f => ({
       ...f,
       confluences: f.confluences.includes(c)
@@ -292,7 +347,7 @@ export default function TradeForm({ editTrade, onSaved, onCancel, defaultTradeTy
       pnl:         parseFloat(form.pnl),
       rr:          parseFloat(form.rr) || 0,
       confluences: form.confluences,
-      dol_type:    (form.dol_type   || null) as DolType  | null,
+      target:      (form.target     || null) as TargetType | null,
       kill_zone:   (form.kill_zone  || null) as KillZone | null,
       comment:     form.comment  || null,
       notes:       form.notes      || null,
@@ -574,12 +629,12 @@ export default function TradeForm({ editTrade, onSaved, onCancel, defaultTradeTy
           </div>
         </FormField>
 
-        <FormField label="DOL Objetivo">
+        <FormField label="Target">
           <Select
-            value={form.dol_type}
-            onChange={e => set('dol_type', e.target.value as DolType | '')}
+            value={form.target}
+            onChange={e => set('target', e.target.value as TargetType | '')}
           >
-            {DOL_GROUPS.map(group => (
+            {TARGET_GROUPS.map(group => (
               <optgroup key={group.label} label={group.label}>
                 {group.options.map(d => (
                   <option key={d} value={d}>{d}</option>
@@ -594,30 +649,76 @@ export default function TradeForm({ editTrade, onSaved, onCancel, defaultTradeTy
       {/* ── Confluences ── */}
       <FormField label="Confluencias">
         <div className="space-y-3">
-          {CONFLUENCE_GROUPS.map(group => (
-            <div key={group.label}>
-              <p className="text-[#4b5563] text-[10px] font-semibold uppercase tracking-widest mb-2">
-                {group.label}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {group.items.map(c => (
+          <div className="flex flex-wrap gap-2">
+            {FIXED_CONFLUENCES.map(c => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => toggleConfluence(c)}
+                className={cn(
+                  'px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors',
+                  form.confluences.includes(c)
+                    ? 'bg-[#4f8ef7]/10 border-[#4f8ef7] text-[#4f8ef7]'
+                    : 'border-[#2a2d3a] text-[#6b7280] hover:border-[#3a3d4a] hover:text-[#e8eaf0]'
+                )}
+              >
+                {c}
+              </button>
+            ))}
+            {customConfluences
+              .filter(c => !FIXED_CONFLUENCES.includes(c.label))
+              .map(c => (
+                <div key={c.id} className="relative group">
                   <button
-                    key={c}
                     type="button"
-                    onClick={() => toggleConfluence(c)}
+                    onClick={() => toggleConfluence(c.label)}
                     className={cn(
-                      'px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors',
-                      form.confluences.includes(c)
+                      'pl-3 pr-6 py-1.5 rounded-lg text-xs font-medium border transition-colors',
+                      form.confluences.includes(c.label)
                         ? 'bg-[#4f8ef7]/10 border-[#4f8ef7] text-[#4f8ef7]'
                         : 'border-[#2a2d3a] text-[#6b7280] hover:border-[#3a3d4a] hover:text-[#e8eaf0]'
                     )}
                   >
-                    {c}
+                    {c.label}
                   </button>
-                ))}
-              </div>
-            </div>
-          ))}
+                  <button
+                    type="button"
+                    onClick={() => deleteCustomConfluence(c)}
+                    disabled={deletingConfluenceId === c.id}
+                    title="Eliminar tag"
+                    className="absolute top-1/2 right-1 -translate-y-1/2 p-0.5 rounded-full text-[#4b5563] hover:text-[#fc5c65] hover:bg-[#fc5c65]/10 transition-colors disabled:opacity-40"
+                  >
+                    <X size={11} />
+                  </button>
+                </div>
+              ))}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="Añadir tag personalizado..."
+              value={customConfluenceInput}
+              onChange={e => setCustomConfluenceInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  addCustomConfluence()
+                }
+              }}
+            />
+            <button
+              type="button"
+              onClick={addCustomConfluence}
+              disabled={!customConfluenceInput.trim() || addingConfluence}
+              className={cn(
+                'shrink-0 px-3 py-2 rounded-lg text-xs font-semibold border transition-colors',
+                'border-[#2a2d3a] text-[#6b7280] hover:border-[#4f8ef7]/50 hover:text-[#4f8ef7]',
+                (!customConfluenceInput.trim() || addingConfluence) && 'opacity-40 cursor-not-allowed'
+              )}
+            >
+              +
+            </button>
+          </div>
         </div>
       </FormField>
 
@@ -655,7 +756,8 @@ export default function TradeForm({ editTrade, onSaved, onCancel, defaultTradeTy
                 <img
                   src={preview}
                   alt={`Trade chart ${slot}`}
-                  className="w-full max-h-48 object-contain rounded-lg border border-[#2a2d3a]"
+                  onClick={() => setLightboxIndex(imagePreviews.slice(0, slot - 1).filter(Boolean).length)}
+                  className="w-full max-h-48 object-contain rounded-lg border border-[#2a2d3a] cursor-zoom-in hover:border-[#3a3d4a] transition-colors"
                 />
                 <button
                   type="button"
@@ -719,6 +821,15 @@ export default function TradeForm({ editTrade, onSaved, onCancel, defaultTradeTy
           {editTrade ? 'Guardar cambios' : 'Registrar trade'}
         </button>
       </div>
+
+      {lightboxIndex !== null && (
+        <ImageLightbox
+          images={imagePreviews.filter(Boolean) as string[]}
+          index={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          onIndexChange={setLightboxIndex}
+        />
+      )}
     </form>
   )
 }

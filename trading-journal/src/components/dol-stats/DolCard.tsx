@@ -1,53 +1,54 @@
 import { cn, formatCurrency } from '@/lib/utils'
-import type { DolType } from '@/types/database'
+import type { TargetType } from '@/types/database'
 
-const DOL_LABELS: Record<DolType, { short: string; description: string; group?: string }> = {
-  // Asia Session
-  'Asia High':           { short: 'AH',   description: 'Asia High',                group: 'Asia' },
-  'Asia Low':            { short: 'AL',   description: 'Asia Low',                 group: 'Asia' },
-  // London Session
-  'London High':         { short: 'LH',   description: 'London High',              group: 'LON' },
-  'London Low':          { short: 'LL',   description: 'London Low',               group: 'LON' },
-  // NY Session
-  'NY High':             { short: 'NYH',  description: 'NY High',                  group: 'NY' },
-  'NY Low':              { short: 'NYL',  description: 'NY Low',                   group: 'NY' },
-  'NY Opening Gap':      { short: 'NYOG', description: 'NY Opening Gap',           group: 'NY' },
-  // Liquidez ICT
-  'SSL':                 { short: 'SSL',  description: 'Sell Side Liquidity',      group: 'ICT' },
-  'BSL':                 { short: 'BSL',  description: 'Buy Side Liquidity',       group: 'ICT' },
-  'Equal Highs':         { short: 'EQH',  description: 'Equal Highs',              group: 'ICT' },
-  'Equal Lows':          { short: 'EQL',  description: 'Equal Lows',               group: 'ICT' },
-  'Relative Equal Highs':{ short: 'REH',  description: 'Relative Equal Highs',     group: 'ICT' },
-  'Relative Equal Lows': { short: 'REL',  description: 'Relative Equal Lows',      group: 'ICT' },
-  'Old High':            { short: 'OH',   description: 'Old High',                 group: 'ICT' },
-  'Old Low':             { short: 'OL',   description: 'Old Low',                  group: 'ICT' },
-  'Daily High':          { short: 'DaH',  description: 'Daily High',               group: 'ICT' },
-  'Daily Low':           { short: 'DaL',  description: 'Daily Low',                group: 'ICT' },
-  'Weekly High':         { short: 'WH',   description: 'Weekly High',              group: 'ICT' },
-  'Weekly Low':          { short: 'WL',   description: 'Weekly Low',               group: 'ICT' },
-  'Monthly High':        { short: 'MoH',  description: 'Monthly High',             group: 'ICT' },
-  'Monthly Low':         { short: 'MoL',  description: 'Monthly Low',              group: 'ICT' },
-  // Volume Profile
-  'POC Diario':          { short: 'POCd', description: 'POC Diario',               group: 'VP' },
-  'POC Semanal':         { short: 'POCw', description: 'POC Semanal',              group: 'VP' },
-  'POC Mensual':         { short: 'POCm', description: 'POC Mensual',              group: 'VP' },
-  'POC Ayer':            { short: 'POCy', description: 'POC Ayer',                 group: 'VP' },
-  'VAH':                 { short: 'VAH',  description: 'Value Area High',          group: 'VP' },
-  'VAL':                 { short: 'VAL',  description: 'Value Area Low',           group: 'VP' },
-  'HVN':                 { short: 'HVN',  description: 'High Volume Node',         group: 'VP' },
-  'LVN':                 { short: 'LVN',  description: 'Low Volume Node',          group: 'VP' },
-  // Estructura
-  'Previous Day High':   { short: 'PDH',  description: 'Previous Day High',        group: 'EST' },
-  'Previous Day Low':    { short: 'PDL',  description: 'Previous Day Low',         group: 'EST' },
-  'Previous Week High':  { short: 'PWH',  description: 'Previous Week High',       group: 'EST' },
-  'Previous Week Low':   { short: 'PWL',  description: 'Previous Week Low',        group: 'EST' },
-  // Legacy
-  'Data Highs':          { short: 'DH',   description: 'Data Highs',               group: 'ICT' },
-  'Data Lows':           { short: 'DL',   description: 'Data Lows',                group: 'ICT' },
+const DOL_LABELS: Record<TargetType, { short: string; description: string; group?: string }> = {
+  // Big Trades
+  'Big Trade Comprador': { short: 'BTc',  description: 'Big Trade Comprador',      group: 'BIG' },
+  'Big Trade Vendedor':  { short: 'BTv',  description: 'Big Trade Vendedor',       group: 'BIG' },
+  'Big Trade':           { short: 'BT',   description: 'Big Trade',                group: 'BIG' },
+  // VAL
+  'VAL diario':          { short: 'VALdi', description: 'VAL diario',             group: 'VAL' },
+  'VAL RTH':             { short: 'VALr', description: 'VAL RTH',                  group: 'VAL' },
+  'VAL día anterior':    { short: 'VALd', description: 'VAL día anterior',         group: 'VAL' },
+  'VAL horario':         { short: 'VALh', description: 'VAL horario',              group: 'VAL' },
+  'VAL semanal':         { short: 'VALw', description: 'VAL semanal',              group: 'VAL' },
+  'VAL mensual':         { short: 'VALm', description: 'VAL mensual',              group: 'VAL' },
+  // VAH
+  'VAH diario':          { short: 'VAHdi', description: 'VAH diario',             group: 'VAH' },
+  'VAH RTH':             { short: 'VAHr', description: 'VAH RTH',                  group: 'VAH' },
+  'VAH día anterior':    { short: 'VAHd', description: 'VAH día anterior',         group: 'VAH' },
+  'VAH horario':         { short: 'VAHh', description: 'VAH horario',              group: 'VAH' },
+  'VAH semanal':         { short: 'VAHw', description: 'VAH semanal',              group: 'VAH' },
+  'VAH mensual':         { short: 'VAHm', description: 'VAH mensual',              group: 'VAH' },
+  // POC
+  'POC horario':         { short: 'POCh', description: 'POC horario',              group: 'POC' },
+  'POC diario':          { short: 'POCd', description: 'POC diario',               group: 'POC' },
+  'POC semanal':         { short: 'POCw', description: 'POC semanal',              group: 'POC' },
+  'POC mensual':         { short: 'POCm', description: 'POC mensual',              group: 'POC' },
+  // VWAP
+  'VWAP ETH':            { short: 'VWe',  description: 'VWAP ETH',                 group: 'VWAP' },
+  'VWAP RTH':             { short: 'VWr',  description: 'VWAP RTH',                 group: 'VWAP' },
+  'VWAP día anterior':   { short: 'VWd',  description: 'VWAP día anterior',        group: 'VWAP' },
+  'VWAP semanal':        { short: 'VWw',  description: 'VWAP semanal',             group: 'VWAP' },
+  'VWAP mensual':        { short: 'VWm',  description: 'VWAP mensual',             group: 'VWAP' },
+  // Initial Balance
+  'IB High 30min':       { short: 'IBH30',description: 'IB High 30min',            group: 'IB' },
+  'IB High 1h':          { short: 'IBH1h',description: 'IB High 1h',               group: 'IB' },
+  'IB Low 30min':        { short: 'IBL30',description: 'IB Low 30min',             group: 'IB' },
+  'IB Low 1h':           { short: 'IBL1h',description: 'IB Low 1h',                group: 'IB' },
+  // Nodos
+  'HVN':                 { short: 'HVN',  description: 'High Volume Node',         group: 'Nodos' },
+  'LVN':                 { short: 'LVN',  description: 'Low Volume Node',          group: 'Nodos' },
+  // TPO
+  'TPO':                 { short: 'TPO',  description: 'Time Price Opportunity',   group: 'TPO' },
+  // Gaps
+  'NDOG':                { short: 'NDOG', description: 'New Day Opening Gap',      group: 'Gaps' },
+  'NWOG':                { short: 'NWOG', description: 'New Week Opening Gap',     group: 'Gaps' },
+  'NMOG':                { short: 'NMOG', description: 'New Month Opening Gap',    group: 'Gaps' },
 }
 
 export interface DolStat {
-  dol:     DolType
+  dol:     TargetType
   total:   number
   wins:    number
   losses:  number
@@ -108,11 +109,14 @@ export default function DolCard({ stat, rank }: DolCardProps) {
             {label.group && (
               <span className={cn(
                 'text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider',
-                label.group === 'VP'  ? 'bg-[#a855f7]/10 text-[#a855f7]' :
-                label.group === 'NY'  ? 'bg-[#4f8ef7]/10 text-[#4f8ef7]' :
-                label.group === 'LON' ? 'bg-[#26de81]/10 text-[#26de81]' :
-                label.group === 'Asia'? 'bg-[#f7c948]/10 text-[#f7c948]' :
-                label.group === 'EST' ? 'bg-[#fc5c65]/10 text-[#fc5c65]' :
+                label.group === 'BIG'   ? 'bg-[#fc5c65]/10 text-[#fc5c65]' :
+                label.group === 'VAL'   ? 'bg-[#26de81]/10 text-[#26de81]' :
+                label.group === 'VAH'   ? 'bg-[#4f8ef7]/10 text-[#4f8ef7]' :
+                label.group === 'POC'   ? 'bg-[#a855f7]/10 text-[#a855f7]' :
+                label.group === 'VWAP'  ? 'bg-[#f7c948]/10 text-[#f7c948]' :
+                label.group === 'IB'    ? 'bg-[#f59e0b]/10 text-[#f59e0b]' :
+                label.group === 'Nodos' ? 'bg-[#22d3ee]/10 text-[#22d3ee]' :
+                label.group === 'TPO'   ? 'bg-[#ec4899]/10 text-[#ec4899]' :
                 'bg-[#4b5563]/20 text-[#6b7280]'
               )}>
                 {label.group}

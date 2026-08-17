@@ -24,7 +24,7 @@ export default function DashboardPage() {
   const router = useRouter()
   const [trades, setTrades]       = useState<Trade[]>([])
   const [loading, setLoading]     = useState(true)
-  const [filter, setFilter]       = useState<TimeFilter>('1m')
+  const [filter, setFilter]       = useState<TimeFilter>('all')
   const [showR, setShowR]         = useState(false)
 
   const fetchTrades = useCallback(async () => {

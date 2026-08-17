@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { format } from 'date-fns'
-import { Plus, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, X, ChevronLeft, ChevronRight, FileJson } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { cn, formatPercent } from '@/lib/utils'
 import TradeForm from '@/components/diario/TradeForm'
 import TodayTrades from '@/components/diario/TodayTrades'
+import ImportJsonPanel from '@/components/diario/ImportJsonPanel'
 import MetricCard from '@/components/dashboard/MetricCard'
 import MonthCalendar from '@/components/dashboard/MonthCalendar'
 import type { Trade } from '@/types/database'
@@ -17,6 +18,7 @@ export default function BacktestingPage() {
   const [allTrades,  setAllTrades]  = useState<Trade[]>([])
   const [loading,    setLoading]    = useState(true)
   const [showForm,   setShowForm]   = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [editTrade,  setEditTrade]  = useState<Trade | null>(null)
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'))
 
@@ -62,6 +64,16 @@ export default function BacktestingPage() {
   function handleCancel() {
     setShowForm(false)
     setEditTrade(null)
+  }
+
+  function handleImported() {
+    setShowImport(false)
+    fetchDayTrades()
+    fetchAllTrades()
+  }
+
+  function handleImportCancel() {
+    setShowImport(false)
   }
 
   function shiftDate(days: number) {
@@ -111,14 +123,23 @@ export default function BacktestingPage() {
             Sesiones de práctica — sin impacto en estadísticas reales
           </p>
         </div>
-        {!showForm && (
-          <button
-            onClick={() => { setEditTrade(null); setShowForm(true) }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#a855f7] hover:bg-[#9333ea] text-white text-sm font-semibold rounded-lg transition-colors"
-          >
-            <Plus size={16} />
-            Nueva sesión
-          </button>
+        {!showForm && !showImport && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowImport(true)}
+              className="flex items-center gap-2 px-4 py-2.5 border border-[#2a2d3a] hover:border-[#3a3d4a] text-[#e8eaf0] text-sm font-semibold rounded-lg transition-colors"
+            >
+              <FileJson size={16} />
+              Importar JSON
+            </button>
+            <button
+              onClick={() => { setEditTrade(null); setShowForm(true) }}
+              className="flex items-center gap-2 px-4 py-2.5 bg-[#a855f7] hover:bg-[#9333ea] text-white text-sm font-semibold rounded-lg transition-colors"
+            >
+              <Plus size={16} />
+              Nueva sesión
+            </button>
+          </div>
         )}
       </div>
 
@@ -143,6 +164,28 @@ export default function BacktestingPage() {
               editTrade={editTrade}
               onSaved={handleSaved}
               onCancel={handleCancel}
+              defaultTradeType="backtest"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ── Import JSON panel ── */}
+      {showImport && (
+        <div className="bg-[#1a1d27] border border-[#a855f7]/30 rounded-xl overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-[#2a2d3a]">
+            <h2 className="text-[#e8eaf0] font-semibold text-sm">Importar sesiones de backtest desde JSON</h2>
+            <button
+              onClick={handleImportCancel}
+              className="p-1.5 rounded-lg text-[#6b7280] hover:text-[#e8eaf0] hover:bg-[#1f2230] transition-colors"
+            >
+              <X size={16} />
+            </button>
+          </div>
+          <div className="p-5">
+            <ImportJsonPanel
+              onImported={handleImported}
+              onCancel={handleImportCancel}
               defaultTradeType="backtest"
             />
           </div>
@@ -180,7 +223,7 @@ export default function BacktestingPage() {
 
       {/* ── Calendar ── */}
       {allTrades.length > 0 && (
-        <MonthCalendar dayMap={rDayMap} unit="R" />
+        <MonthCalendar dayMap={rDayMap} unit="R" onDayClick={setSelectedDate} />
       )}
 
       {/* ── Date navigator ── */}

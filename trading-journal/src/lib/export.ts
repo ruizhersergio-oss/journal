@@ -22,7 +22,7 @@ export function tradesToCSV(trades: Trade[]): string {
     'id', 'date', 'time', 'symbol', 'direction',
     'entry_price', 'exit_price', 'sl_price',
     'result', 'pnl', 'rr',
-    'confluences', 'dol_type', 'kill_zone',
+    'confluences', 'target', 'kill_zone',
     'comment', 'notes',
     'image_url', 'image_url_2', 'image_url_3', 'image_url_4', 'image_url_5',
   ]
@@ -40,7 +40,7 @@ export function tradesToCSV(trades: Trade[]): string {
     t.pnl,
     t.rr,
     (t.confluences ?? []).join('; '),
-    t.dol_type  ?? '',
+    t.target    ?? '',
     t.kill_zone ?? '',
     csvEscape(t.comment ?? ''),
     csvEscape(t.notes   ?? ''),
