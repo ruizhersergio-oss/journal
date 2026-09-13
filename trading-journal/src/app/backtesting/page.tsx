@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { format } from 'date-fns'
-import { Plus, X, ChevronLeft, ChevronRight, FileJson } from 'lucide-react'
+import { Plus, X, ChevronLeft, ChevronRight, FileJson, CalendarCheck } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { cn, formatPercent } from '@/lib/utils'
 import TradeForm from '@/components/diario/TradeForm'
@@ -10,7 +10,8 @@ import TodayTrades from '@/components/diario/TodayTrades'
 import ImportJsonPanel from '@/components/diario/ImportJsonPanel'
 import MetricCard from '@/components/dashboard/MetricCard'
 import MonthCalendar from '@/components/dashboard/MonthCalendar'
-import type { Trade } from '@/types/database'
+import DayLogModal from '@/components/dashboard/DayLogModal'
+import type { Trade, DayLog } from '@/types/database'
 import type { DayData } from '@/hooks/useMetrics'
 
 export default function BacktestingPage() {
@@ -21,6 +22,8 @@ export default function BacktestingPage() {
   const [showImport, setShowImport] = useState(false)
   const [editTrade,  setEditTrade]  = useState<Trade | null>(null)
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'))
+  const [dayLogs, setDayLogs] = useState<DayLog[]>([])
+  const [logModalDate, setLogModalDate] = useState<string | null>(null)
 
   // Trades for selected date
   const fetchDayTrades = useCallback(async () => {
@@ -45,8 +48,24 @@ export default function BacktestingPage() {
     if (!error && data) setAllTrades(data as Trade[])
   }, [])
 
+  const fetchDayLogs = useCallback(async () => {
+    const { data, error } = await supabase.from('day_logs').select('*').order('date', { ascending: false })
+    if (!error && data) setDayLogs(data as DayLog[])
+  }, [])
+
   useEffect(() => { fetchDayTrades() }, [fetchDayTrades])
   useEffect(() => { fetchAllTrades() }, [fetchAllTrades])
+  useEffect(() => { fetchDayLogs() }, [fetchDayLogs])
+
+  const dayLogMap = useMemo(() => {
+    const map = new Map<string, DayLog[]>()
+    for (const log of dayLogs) {
+      const existing = map.get(log.date) ?? []
+      existing.push(log)
+      map.set(log.date, existing)
+    }
+    return map
+  }, [dayLogs])
 
   function handleEdit(trade: Trade) {
     setEditTrade(trade)
@@ -125,6 +144,13 @@ export default function BacktestingPage() {
         </div>
         {!showForm && !showImport && (
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setLogModalDate(selectedDate)}
+              className="flex items-center gap-2 px-4 py-2.5 border border-[#2a2d3a] hover:border-[#3a3d4a] text-[#e8eaf0] text-sm font-semibold rounded-lg transition-colors"
+            >
+              <CalendarCheck size={16} />
+              + Marcar día
+            </button>
             <button
               onClick={() => setShowImport(true)}
               className="flex items-center gap-2 px-4 py-2.5 border border-[#2a2d3a] hover:border-[#3a3d4a] text-[#e8eaf0] text-sm font-semibold rounded-lg transition-colors"
@@ -222,8 +248,14 @@ export default function BacktestingPage() {
       )}
 
       {/* ── Calendar ── */}
-      {allTrades.length > 0 && (
-        <MonthCalendar dayMap={rDayMap} unit="R" onDayClick={setSelectedDate} />
+      {(allTrades.length > 0 || dayLogs.length > 0) && (
+        <MonthCalendar
+          dayMap={rDayMap}
+          dayLogMap={dayLogMap}
+          unit="R"
+          onDayClick={setSelectedDate}
+          onEmptyDayClick={setLogModalDate}
+        />
       )}
 
       {/* ── Date navigator ── */}
@@ -277,6 +309,16 @@ export default function BacktestingPage() {
           onEdit={handleEdit}
           onDelete={() => { fetchDayTrades(); fetchAllTrades() }}
           date={selectedDate}
+        />
+      )}
+
+      {logModalDate && (
+        <DayLogModal
+          date={logModalDate}
+          existingLogs={dayLogMap.get(logModalDate) ?? []}
+          defaultStatus="backtest_sin_trade"
+          onClose={() => setLogModalDate(null)}
+          onSaved={() => { fetchDayLogs() }}
         />
       )}
     </div>

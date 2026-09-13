@@ -12,12 +12,13 @@ import { DAY_LOG_STATUSES, DAY_LOG_STATUS_LABELS, SYMBOLS } from '@/types/databa
 interface DayLogModalProps {
   date:          string
   existingLogs:  DayLog[]
+  defaultStatus?: DayLogStatus
   onClose:       () => void
   onSaved:       () => void
 }
 
-export default function DayLogModal({ date, existingLogs, onClose, onSaved }: DayLogModalProps) {
-  const [status, setStatus]   = useState<DayLogStatus>('sin_operativa')
+export default function DayLogModal({ date, existingLogs, defaultStatus = 'sin_operativa', onClose, onSaved }: DayLogModalProps) {
+  const [status, setStatus]   = useState<DayLogStatus>(defaultStatus)
   const [symbol, setSymbol]   = useState<Symbol | ''>('')
   const [note, setNote]       = useState('')
   const [saving, setSaving]   = useState(false)
@@ -35,7 +36,7 @@ export default function DayLogModal({ date, existingLogs, onClose, onSaved }: Da
     })
     setSaving(false)
     if (!error) {
-      setStatus('sin_operativa')
+      setStatus(defaultStatus)
       setSymbol('')
       setNote('')
       onSaved()
