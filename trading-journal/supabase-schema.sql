@@ -16,9 +16,11 @@ CREATE TYPE target_type     AS ENUM (
   'VWAP ETH', 'VWAP RTH', 'VWAP día anterior', 'VWAP semanal', 'VWAP mensual',
   'IB High 30min', 'IB High 1h', 'IB Low 30min', 'IB Low 1h',
   'HVN', 'LVN',
-  'TPO'
+  'TPO',
+  'NDOG', 'NWOG', 'NMOG'
 );
 CREATE TYPE account_status  AS ENUM ('activa', 'breached', 'funded');
+CREATE TYPE day_log_status  AS ENUM ('sin_operativa', 'backtest_sin_trade', 'otro');
 
 -- ============================================================
 -- TABLA: trades
@@ -79,6 +81,22 @@ CREATE TABLE funding_accounts (
   withdrawn   NUMERIC(10, 2) NOT NULL DEFAULT 0,
   notes       TEXT
 );
+
+-- ============================================================
+-- TABLA: day_logs
+-- Marca días como revisados aunque no tengan trades asociados
+-- (p.ej. "sin operativa" o "backtesteado pero sin trade que registrar")
+-- ============================================================
+CREATE TABLE day_logs (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  date       DATE NOT NULL,
+  symbol     trade_symbol,
+  status     day_log_status NOT NULL DEFAULT 'sin_operativa',
+  note       TEXT
+);
+
+CREATE INDEX idx_day_logs_date ON day_logs(date);
 
 -- ============================================================
 -- VISTAS ÚTILES

@@ -78,6 +78,15 @@ export type TradeType = typeof TRADE_TYPES[number]
 export const ACCOUNT_STATUSES = ['activa', 'funded', 'breached', 'completada'] as const
 export type AccountStatus = typeof ACCOUNT_STATUSES[number]
 
+export const DAY_LOG_STATUSES = ['sin_operativa', 'backtest_sin_trade', 'otro'] as const
+export type DayLogStatus = typeof DAY_LOG_STATUSES[number]
+
+export const DAY_LOG_STATUS_LABELS: Record<DayLogStatus, string> = {
+  sin_operativa:       'Sin operativa',
+  backtest_sin_trade:  'Backtest sin trade',
+  otro:                'Otro',
+}
+
 export const PROP_FIRMS = [
   'Lucid Trading',
   'FTMO',
@@ -118,6 +127,15 @@ export interface CustomConfluence {
   id:         string
   label:      string
   created_at: string
+}
+
+export interface DayLog {
+  id:         string
+  created_at: string
+  date:       string
+  symbol:     Symbol | null
+  status:     DayLogStatus
+  note:       string | null
 }
 
 export interface Trade {
@@ -169,6 +187,11 @@ export interface Database {
         Row: CustomConfluence
         Insert: Omit<CustomConfluence, 'id' | 'created_at'>
         Update: Partial<Omit<CustomConfluence, 'id' | 'created_at'>>
+      }
+      day_logs: {
+        Row: DayLog
+        Insert: Omit<DayLog, 'id' | 'created_at'>
+        Update: Partial<Omit<DayLog, 'id' | 'created_at'>>
       }
     }
   }

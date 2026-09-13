@@ -9,17 +9,20 @@ import {
 import { cn } from '@/lib/utils'
 import { formatCurrency, formatPercent } from '@/lib/utils'
 import type { DayData } from '@/hooks/useMetrics'
+import type { DayLog } from '@/types/database'
 
 interface MonthCalendarProps {
-  dayMap:       Map<string, DayData>
-  showR?:       boolean
-  unit?:        'currency' | 'R'
-  onDayClick?:  (date: string) => void
+  dayMap:          Map<string, DayData>
+  dayLogMap?:      Map<string, DayLog[]>
+  showR?:          boolean
+  unit?:           'currency' | 'R'
+  onDayClick?:     (date: string) => void
+  onEmptyDayClick?: (date: string) => void
 }
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 
-export default function MonthCalendar({ dayMap, showR = false, unit = 'currency', onDayClick }: MonthCalendarProps) {
+export default function MonthCalendar({ dayMap, dayLogMap, showR = false, unit = 'currency', onDayClick, onEmptyDayClick }: MonthCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
 
   const monthStart = startOfMonth(currentDate)
@@ -99,11 +102,13 @@ export default function MonthCalendar({ dayMap, showR = false, unit = 'currency'
           const hasMixed   = hasTrades && data.hasDemo && data.hasReal
           const isPos      = hasTrades && data.pnl > 0
           const isNeg      = hasTrades && data.pnl < 0
+          const dayLogs    = dayLogMap?.get(key) ?? []
+          const hasLog     = !hasTrades && dayLogs.length > 0
 
           return (
             <div
               key={key}
-              onClick={() => hasTrades && onDayClick?.(key)}
+              onClick={() => (hasTrades ? onDayClick?.(key) : onEmptyDayClick?.(key))}
               className={cn(
                 'relative border-b border-r border-[#2a2d3a] min-h-[80px] p-2 flex flex-col transition-colors',
                 !inMonth && 'opacity-30',
@@ -112,9 +117,11 @@ export default function MonthCalendar({ dayMap, showR = false, unit = 'currency'
                 !isDemoOnly && isNeg && 'bg-[#fc5c65]/5 hover:bg-[#fc5c65]/10',
                 // Demo-only color
                 isDemoOnly && 'bg-[#f59e0b]/5 hover:bg-[#f59e0b]/10',
-                !hasTrades && 'hover:bg-[#1f2230]',
+                // Reviewed-but-no-trades color
+                hasLog && 'bg-[#8b5cf6]/5 hover:bg-[#8b5cf6]/10',
+                !hasTrades && !hasLog && 'hover:bg-[#1f2230]',
                 isToday_ && 'ring-1 ring-inset ring-[#4f8ef7]/50',
-                hasTrades && onDayClick && 'cursor-pointer'
+                (hasTrades ? onDayClick : onEmptyDayClick) && 'cursor-pointer'
               )}
             >
               {/* Gold dot for mixed days (real + demo) */}
@@ -122,6 +129,14 @@ export default function MonthCalendar({ dayMap, showR = false, unit = 'currency'
                 <span
                   className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#f59e0b]"
                   title="Incluye trades demo destacado"
+                />
+              )}
+
+              {/* Purple dot for reviewed days with no trades */}
+              {hasLog && (
+                <span
+                  className="absolute top-1.5 left-1.5 w-1.5 h-1.5 rounded-full bg-[#8b5cf6]"
+                  title={`Revisado: ${dayLogs.map(l => l.status).join(', ')}`}
                 />
               )}
 
@@ -173,6 +188,10 @@ export default function MonthCalendar({ dayMap, showR = false, unit = 'currency'
                     </span>
                   </>
                 )
+              )}
+
+              {!hasTrades && hasLog && (
+                <span className="text-[10px] text-[#8b5cf6] font-medium">revisado</span>
               )}
             </div>
           )

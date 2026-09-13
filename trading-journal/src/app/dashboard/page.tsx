@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { subDays, format } from 'date-fns'
 import { supabase } from '@/lib/supabase'
@@ -9,7 +9,8 @@ import { formatCurrency, formatPercent, formatR, cn } from '@/lib/utils'
 import MetricCard from '@/components/dashboard/MetricCard'
 import MonthCalendar from '@/components/dashboard/MonthCalendar'
 import PnlCharts from '@/components/dashboard/PnlCharts'
-import type { Trade } from '@/types/database'
+import DayLogModal from '@/components/dashboard/DayLogModal'
+import type { Trade, DayLog } from '@/types/database'
 
 type TimeFilter = 'today' | '7d' | '1m' | 'all'
 
@@ -23,9 +24,11 @@ const TIME_FILTERS: { key: TimeFilter; label: string }[] = [
 export default function DashboardPage() {
   const router = useRouter()
   const [trades, setTrades]       = useState<Trade[]>([])
+  const [dayLogs, setDayLogs]     = useState<DayLog[]>([])
   const [loading, setLoading]     = useState(true)
   const [filter, setFilter]       = useState<TimeFilter>('all')
   const [showR, setShowR]         = useState(false)
+  const [logModalDate, setLogModalDate] = useState<string | null>(null)
 
   const fetchTrades = useCallback(async () => {
     setLoading(true)
@@ -47,11 +50,30 @@ export default function DashboardPage() {
     setLoading(false)
   }, [filter])
 
+  const fetchDayLogs = useCallback(async () => {
+    const { data, error } = await supabase.from('day_logs').select('*').order('date', { ascending: false })
+    if (!error && data) setDayLogs(data as DayLog[])
+  }, [])
+
   useEffect(() => {
     fetchTrades()
   }, [fetchTrades])
 
+  useEffect(() => {
+    fetchDayLogs()
+  }, [fetchDayLogs])
+
   const { metrics, dayMap } = useMetrics(trades)
+
+  const dayLogMap = useMemo(() => {
+    const map = new Map<string, DayLog[]>()
+    for (const log of dayLogs) {
+      const existing = map.get(log.date) ?? []
+      existing.push(log)
+      map.set(log.date, existing)
+    }
+    return map
+  }, [dayLogs])
 
   const pnlTrend = (v: number) => v > 0 ? 'positive' : v < 0 ? 'negative' : 'neutral'
 
@@ -159,8 +181,10 @@ export default function DashboardPage() {
         <div className="xl:col-span-2">
           <MonthCalendar
             dayMap={dayMap}
+            dayLogMap={dayLogMap}
             showR={showR}
             onDayClick={(date) => router.push(`/diario?date=${date}`)}
+            onEmptyDayClick={(date) => setLogModalDate(date)}
           />
         </div>
 
@@ -192,6 +216,15 @@ export default function DashboardPage() {
 
       {/* Charts */}
       <PnlCharts dayMap={dayMap} showR={showR} />
+
+      {logModalDate && (
+        <DayLogModal
+          date={logModalDate}
+          existingLogs={dayLogMap.get(logModalDate) ?? []}
+          onClose={() => setLogModalDate(null)}
+          onSaved={() => { fetchDayLogs() }}
+        />
+      )}
     </div>
   )
 }
