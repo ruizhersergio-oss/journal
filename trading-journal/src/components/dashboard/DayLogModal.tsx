@@ -25,9 +25,11 @@ export default function DayLogModal({ date, existingLogs, defaultStatus = 'sin_o
   const [note, setNote]       = useState('')
   const [saving, setSaving]   = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   async function handleSave() {
     setSaving(true)
+    setErrorMsg(null)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const table = supabase.from('day_logs') as any
     const { error } = await table.insert({
@@ -37,7 +39,9 @@ export default function DayLogModal({ date, existingLogs, defaultStatus = 'sin_o
       note: note.trim() || null,
     })
     setSaving(false)
-    if (!error) {
+    if (error) {
+      setErrorMsg(error.message)
+    } else {
       setStatus(defaultStatus)
       setSymbol('')
       setNote('')
@@ -47,9 +51,14 @@ export default function DayLogModal({ date, existingLogs, defaultStatus = 'sin_o
 
   async function handleDelete(id: string) {
     setDeletingId(id)
+    setErrorMsg(null)
     const { error } = await supabase.from('day_logs').delete().eq('id', id)
     setDeletingId(null)
-    if (!error) onSaved()
+    if (error) {
+      setErrorMsg(error.message)
+    } else {
+      onSaved()
+    }
   }
 
   if (typeof document === 'undefined') return null
@@ -134,6 +143,10 @@ export default function DayLogModal({ date, existingLogs, defaultStatus = 'sin_o
             placeholder="Ej: sin setups válidos, solo repaso de gráfico..."
           />
         </FormField>
+
+        {errorMsg && (
+          <p className="text-[#fc5c65] text-xs">{errorMsg}</p>
+        )}
 
         <button
           onClick={handleSave}
