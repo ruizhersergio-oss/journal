@@ -7,7 +7,9 @@ import { format, parseISO } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import { FormField, Select, Textarea } from '@/components/ui/FormField'
 import type { DayLog, DayLogStatus, Symbol } from '@/types/database'
-import { DAY_LOG_STATUSES, DAY_LOG_STATUS_LABELS, SYMBOLS } from '@/types/database'
+import { DAY_LOG_STATUSES, DAY_LOG_STATUS_LABELS } from '@/types/database'
+
+const DAY_LOG_SYMBOLS: Symbol[] = ['NQ', 'ES']
 
 interface DayLogModalProps {
   date:          string
@@ -117,7 +119,7 @@ export default function DayLogModal({ date, existingLogs, defaultStatus = 'sin_o
           <FormField label="Símbolo (opcional)">
             <Select value={symbol} onChange={(e) => setSymbol(e.target.value as Symbol | '')}>
               <option value="">Todos</option>
-              {SYMBOLS.map((s) => (
+              {DAY_LOG_SYMBOLS.map((s) => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </Select>
